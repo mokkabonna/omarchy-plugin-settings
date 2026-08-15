@@ -17,6 +17,21 @@ Item {
   property var draft: ({})
   property var savedDraft: ({})
   property string status: ""
+  property bool shortcutsVisible: false
+
+  readonly property var shortcutItems: [
+    { keys: "↑ / ↓", action: "Previous / next widget" },
+    { keys: "Home / End", action: "First / last widget" },
+    { keys: "Ctrl+1 … 9", action: "Select widget by list position" },
+    { keys: "Tab / Shift+Tab", action: "Move keyboard focus" },
+    { keys: "Enter / Space", action: "Activate the focused control" },
+    { keys: "↑ / ↓ in number", action: "Adjust by the configured step" },
+    { keys: "Page Up / Down", action: "Scroll the settings form" },
+    { keys: "Ctrl+S", action: "Save pending changes" },
+    { keys: "Ctrl+R", action: "Reset to manifest defaults" },
+    { keys: "Esc / Ctrl+W", action: "Close" },
+    { keys: "?", action: "Show or hide this reference" }
+  ]
 
   readonly property bool dirty: JSON.stringify(draft) !== JSON.stringify(savedDraft)
 
@@ -59,6 +74,29 @@ Item {
     for (var key in instance.entry) if (key !== "id") next[key] = instance.entry[key]
     draft = next
     savedDraft = JSON.parse(JSON.stringify(next))
+  }
+
+  function selectRelativeWidget(offset) {
+    var widgets = widgetInstancesWithSchemas()
+    if (widgets.length === 0) return
+    var current = -1
+    for (var i = 0; i < widgets.length; i++) {
+      if (widgets[i].id === selectedId && widgets[i].section === selectedSection
+          && widgets[i].index === selectedIndex) {
+        current = i
+        break
+      }
+    }
+    var next = current < 0 ? 0 : Math.max(0, Math.min(widgets.length - 1, current + offset))
+    selectWidget(widgets[next])
+    widgetList.positionViewAtIndex(next, ListView.Contain)
+  }
+
+  function selectWidgetAt(listIndex) {
+    var widgets = widgetInstancesWithSchemas()
+    if (listIndex < 0 || listIndex >= widgets.length) return
+    selectWidget(widgets[listIndex])
+    widgetList.positionViewAtIndex(listIndex, ListView.Contain)
   }
 
   function setValue(key, value) {
@@ -157,6 +195,7 @@ Item {
 
   function open(payloadJson) {
     opened = true
+    shortcutsVisible = false
     window.visible = true
     var widgets = widgetInstancesWithSchemas()
     if ((!selectedId || selectedIndex < 0) && widgets.length > 0) selectWidget(widgets[0])
@@ -164,6 +203,7 @@ Item {
 
   function close() {
     closingFromHost = true
+    shortcutsVisible = false
     opened = false
     window.visible = false
     closingFromHost = false
@@ -172,6 +212,20 @@ Item {
   function requestClose() {
     if (shell && typeof shell.hide === "function") shell.hide((manifest && manifest.id) || "mokkabonna.plugin-settings")
     else close()
+  }
+
+  function toggleShortcuts() {
+    shortcutsVisible = !shortcutsVisible
+    if (shortcutsVisible)
+      Qt.callLater(function() { shortcutsCloseMouse.forceActiveFocus() })
+    else
+      Qt.callLater(function() { shortcutsMouse.forceActiveFocus() })
+  }
+
+  function hideShortcuts() {
+    if (!shortcutsVisible) return
+    shortcutsVisible = false
+    Qt.callLater(function() { shortcutsMouse.forceActiveFocus() })
   }
 
   FloatingWindow {
@@ -197,18 +251,44 @@ Item {
       Keys.priority: Keys.AfterItem
       Keys.onPressed: function(event) {
         if (event.key === Qt.Key_Escape) {
-          root.requestClose()
+          if (root.shortcutsVisible) root.hideShortcuts()
+          else root.requestClose()
+          event.accepted = true
+        } else if (event.text === "?") {
+          root.toggleShortcuts()
           event.accepted = true
         } else if (event.key === Qt.Key_S && (event.modifiers & Qt.ControlModifier)) {
           root.save()
+          event.accepted = true
+        } else if (event.key === Qt.Key_R && (event.modifiers & Qt.ControlModifier)) {
+          root.resetToDefaults()
+          event.accepted = true
+        } else if (event.key === Qt.Key_W && (event.modifiers & Qt.ControlModifier)) {
+          root.requestClose()
+          event.accepted = true
+        } else if (event.key === Qt.Key_PageUp && event.modifiers === Qt.NoModifier) {
+          formFlickable.contentY = Math.max(0, formFlickable.contentY - formFlickable.height * 0.8)
+          event.accepted = true
+        } else if (event.key === Qt.Key_PageDown && event.modifiers === Qt.NoModifier) {
+          formFlickable.contentY = Math.min(formFlickable.contentHeight - formFlickable.height,
+            formFlickable.contentY + formFlickable.height * 0.8)
+          event.accepted = true
+        } else if (event.modifiers & Qt.ControlModifier) {
+          var numberKeys = [Qt.Key_1, Qt.Key_2, Qt.Key_3, Qt.Key_4, Qt.Key_5,
+            Qt.Key_6, Qt.Key_7, Qt.Key_8, Qt.Key_9]
+          var listIndex = numberKeys.indexOf(event.key)
+          if (listIndex < 0) return
+          root.selectWidgetAt(listIndex)
           event.accepted = true
         }
       }
 
       RowLayout {
+        id: mainContent
         anchors.fill: parent
         anchors.margins: Style.space(18)
         spacing: Style.space(14)
+        enabled: !root.shortcutsVisible
 
         Rectangle {
           Layout.preferredWidth: 245
@@ -241,6 +321,7 @@ Item {
 
             ListView {
               id: widgetList
+              activeFocusOnTab: true
               Layout.fillWidth: true
               Layout.fillHeight: true
               clip: true
@@ -250,8 +331,11 @@ Item {
                 width: widgetList.width
                 height: 54
                 radius: Style.cornerRadius / 2
-                color: root.selectedId === modelData.id && root.selectedSection === modelData.section
-                  && root.selectedIndex === modelData.index ? Color.menu.selectedBackground : "transparent"
+                readonly property bool selectedInstance: root.selectedId === modelData.id
+                  && root.selectedSection === modelData.section && root.selectedIndex === modelData.index
+                color: selectedInstance ? Color.menu.selectedBackground : "transparent"
+                border.color: widgetList.activeFocus && selectedInstance ? Color.accent : "transparent"
+                border.width: widgetList.activeFocus && selectedInstance ? 2 : 0
                 Column {
                   anchors.fill: parent
                   anchors.margins: Style.space(8)
@@ -274,7 +358,22 @@ Item {
                     elide: Text.ElideRight
                   }
                 }
-                MouseArea { anchors.fill: parent; onClicked: root.selectWidget(modelData) }
+                MouseArea {
+                  anchors.fill: parent
+                  onClicked: {
+                    widgetList.forceActiveFocus()
+                    root.selectWidget(modelData)
+                  }
+                }
+              }
+              Keys.onPressed: function(event) {
+                if (event.modifiers !== Qt.NoModifier) return
+                if (event.key === Qt.Key_Up) root.selectRelativeWidget(-1)
+                else if (event.key === Qt.Key_Down) root.selectRelativeWidget(1)
+                else if (event.key === Qt.Key_Home) root.selectRelativeWidget(-9999)
+                else if (event.key === Qt.Key_End) root.selectRelativeWidget(9999)
+                else return
+                event.accepted = true
               }
             }
           }
@@ -299,12 +398,41 @@ Item {
               elide: Text.ElideRight
             }
             Rectangle {
+              width: shortcutsLabel.implicitWidth + Style.space(24)
+              height: Style.space(36)
+              radius: Style.cornerRadius / 2
+              color: shortcutsMouse.containsMouse ? Color.menu.selectedBackground : "transparent"
+              border.color: shortcutsMouse.activeFocus ? Color.accent : Color.menu.border
+              border.width: shortcutsMouse.activeFocus ? 2 : 1
+              Text {
+                id: shortcutsLabel
+                anchors.centerIn: parent
+                text: "Shortcuts"
+                color: Color.foreground
+                font.family: Style.font.family
+                font.pixelSize: Style.font.bodySmall
+              }
+              MouseArea {
+                id: shortcutsMouse
+                anchors.fill: parent
+                activeFocusOnTab: true
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.toggleShortcuts()
+                Keys.onPressed: function(event) {
+                  if (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Space) return
+                  root.toggleShortcuts()
+                  event.accepted = true
+                }
+              }
+            }
+            Rectangle {
               width: Style.space(36)
               height: Style.space(36)
               radius: Style.cornerRadius / 2
               color: closeMouse.containsMouse ? Color.menu.selectedBackground : "transparent"
-              border.color: Color.menu.border
-              border.width: 1
+              border.color: closeMouse.activeFocus ? Color.accent : Color.menu.border
+              border.width: closeMouse.activeFocus ? 2 : 1
               Text {
                 anchors.centerIn: parent
                 text: "×"
@@ -315,9 +443,15 @@ Item {
               MouseArea {
                 id: closeMouse
                 anchors.fill: parent
+                activeFocusOnTab: true
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: root.requestClose()
+                Keys.onPressed: function(event) {
+                  if (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Space) return
+                  root.requestClose()
+                  event.accepted = true
+                }
               }
             }
           }
@@ -333,6 +467,7 @@ Item {
           }
 
           Flickable {
+            id: formFlickable
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.topMargin: Style.space(10)
@@ -376,6 +511,7 @@ Item {
                     radius: Style.cornerRadius / 2
 
                     TextInput {
+                      activeFocusOnTab: true
                       anchors.fill: parent
                       anchors.leftMargin: Style.space(10)
                       anchors.rightMargin: Style.space(10)
@@ -394,6 +530,18 @@ Item {
                           value = root.normalizedNumber(modelData, text)
                         if (value === undefined) return
                         root.setValue(modelData.key, value)
+                      }
+                      Keys.onPressed: function(event) {
+                        if ((event.key !== Qt.Key_Up && event.key !== Qt.Key_Down)
+                            || (modelData.type !== "integer" && modelData.type !== "number")) return
+                        var current = root.normalizedNumber(modelData, text)
+                        if (current === undefined) current = Number(root.valueFor(modelData)) || 0
+                        var step = modelData.step !== undefined && Number(modelData.step) > 0
+                          ? Number(modelData.step) : 1
+                        var next = root.normalizedNumber(modelData,
+                          current + (event.key === Qt.Key_Up ? step : -step))
+                        if (next !== undefined) root.setValue(modelData.key, next)
+                        event.accepted = true
                       }
                     }
                   }
@@ -418,31 +566,9 @@ Item {
                       readonly property bool checked: root.valueFor(modelData) === true
                       width: Style.space(42); height: Style.space(24); radius: height / 2
                       color: checked ? Color.accent : Color.menu.background
-                      border.color: checked ? Color.accent : Color.menu.border
-                      border.width: 1
-                      Rectangle {
-                        width: parent.height - Style.space(4)
-                        height: width
-                        radius: width / 2
-                        anchors.verticalCenter: parent.verticalCenter
-                        x: parent.checked ? parent.width - width - Style.space(2) : Style.space(2)
-                        color: parent.checked ? Color.background : Color.foreground
-                        opacity: parent.checked ? 1 : 0.7
-                        Behavior on x { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
-                      }
-                      MouseArea { anchors.fill: parent; onClicked: root.setValue(modelData.key, root.valueFor(modelData) !== true) }
-                    }
-                    Text { text: root.valueFor(modelData) === true ? "On" : "Off"; color: Color.foreground; font.family: Style.font.family; font.pixelSize: Style.font.body }
-                  }
-                  RowLayout {
-                    visible: modelData.type === "enum" && root.isOnOffEnum(modelData)
-                    spacing: Style.space(8)
-                    Rectangle {
-                      readonly property bool checked: String(root.valueFor(modelData)).toLowerCase() === "on"
-                      width: Style.space(42); height: Style.space(24); radius: height / 2
-                      color: checked ? Color.accent : Color.menu.background
-                      border.color: checked ? Color.accent : Color.menu.border
-                      border.width: 1
+                      border.color: booleanToggleMouse.activeFocus ? Color.foreground
+                        : (checked ? Color.accent : Color.menu.border)
+                      border.width: booleanToggleMouse.activeFocus ? 2 : 1
                       Rectangle {
                         width: parent.height - Style.space(4)
                         height: width
@@ -454,8 +580,47 @@ Item {
                         Behavior on x { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
                       }
                       MouseArea {
-                        anchors.fill: parent
+                        id: booleanToggleMouse
+                        anchors.fill: parent; activeFocusOnTab: true
+                        onClicked: root.setValue(modelData.key, root.valueFor(modelData) !== true)
+                        Keys.onPressed: function(event) {
+                          if (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Space) return
+                          root.setValue(modelData.key, root.valueFor(modelData) !== true)
+                          event.accepted = true
+                        }
+                      }
+                    }
+                    Text { text: root.valueFor(modelData) === true ? "On" : "Off"; color: Color.foreground; font.family: Style.font.family; font.pixelSize: Style.font.body }
+                  }
+                  RowLayout {
+                    visible: modelData.type === "enum" && root.isOnOffEnum(modelData)
+                    spacing: Style.space(8)
+                    Rectangle {
+                      readonly property bool checked: String(root.valueFor(modelData)).toLowerCase() === "on"
+                      width: Style.space(42); height: Style.space(24); radius: height / 2
+                      color: checked ? Color.accent : Color.menu.background
+                      border.color: enumToggleMouse.activeFocus ? Color.foreground
+                        : (checked ? Color.accent : Color.menu.border)
+                      border.width: enumToggleMouse.activeFocus ? 2 : 1
+                      Rectangle {
+                        width: parent.height - Style.space(4)
+                        height: width
+                        radius: width / 2
+                        anchors.verticalCenter: parent.verticalCenter
+                        x: parent.checked ? parent.width - width - Style.space(2) : Style.space(2)
+                        color: parent.checked ? Color.background : Color.foreground
+                        opacity: parent.checked ? 1 : 0.7
+                        Behavior on x { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
+                      }
+                      MouseArea {
+                        id: enumToggleMouse
+                        anchors.fill: parent; activeFocusOnTab: true
                         onClicked: root.setValue(modelData.key, parent.checked ? "Off" : "On")
+                        Keys.onPressed: function(event) {
+                          if (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Space) return
+                          root.setValue(modelData.key, parent.checked ? "Off" : "On")
+                          event.accepted = true
+                        }
                       }
                     }
                     Text { text: String(root.valueFor(modelData)).toLowerCase() === "on" ? "On" : "Off"; color: Color.foreground; font.family: Style.font.family; font.pixelSize: Style.font.body }
@@ -472,9 +637,19 @@ Item {
                         width: choiceLabel.implicitWidth + Style.space(2); height: choiceLabel.implicitHeight + Style.space(1)
                         radius: Style.cornerRadius / 2
                         color: root.valueFor(enumChoices.field) === value ? Color.menu.selectedBackground : "transparent"
-                        border.color: Color.menu.border; border.width: 1
+                        border.color: enumChoiceMouse.activeFocus ? Color.accent : Color.menu.border
+                        border.width: enumChoiceMouse.activeFocus ? 2 : 1
                         Text { id: choiceLabel; anchors.centerIn: parent; text: typeof modelData === "object" ? (modelData.label || value) : value; color: Color.foreground; font.family: Style.font.family; font.pixelSize: Style.font.bodySmall }
-                        MouseArea { anchors.fill: parent; onClicked: root.setValue(enumChoices.field.key, parent.value) }
+                        MouseArea {
+                          id: enumChoiceMouse
+                          anchors.fill: parent; activeFocusOnTab: true
+                          onClicked: root.setValue(enumChoices.field.key, parent.value)
+                          Keys.onPressed: function(event) {
+                            if (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Space) return
+                            root.setValue(enumChoices.field.key, parent.value)
+                            event.accepted = true
+                          }
+                        }
                       }
                     }
                   }
@@ -494,8 +669,8 @@ Item {
                         height: Style.space(30)
                         radius: Style.cornerRadius / 2
                         color: selected ? Color.menu.selectedBackground : "transparent"
-                        border.color: selected ? Color.accent : Color.menu.border
-                        border.width: 1
+                        border.color: multiChoiceMouse.activeFocus || selected ? Color.accent : Color.menu.border
+                        border.width: multiChoiceMouse.activeFocus ? 2 : 1
                         Text {
                           id: multiLabel
                           anchors.centerIn: parent
@@ -504,7 +679,16 @@ Item {
                           font.family: Style.font.family
                           font.pixelSize: Style.font.bodySmall
                         }
-                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: root.toggleMultiselect(multiselectChoices.field, parent.value) }
+                        MouseArea {
+                          id: multiChoiceMouse
+                          anchors.fill: parent; activeFocusOnTab: true; cursorShape: Qt.PointingHandCursor
+                          onClicked: root.toggleMultiselect(multiselectChoices.field, parent.value)
+                          Keys.onPressed: function(event) {
+                            if (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Space) return
+                            root.toggleMultiselect(multiselectChoices.field, parent.value)
+                            event.accepted = true
+                          }
+                        }
                       }
                     }
                   }
@@ -535,15 +719,21 @@ Item {
               height: Style.space(38)
               radius: Style.cornerRadius / 2
               color: resetMouse.containsMouse ? Color.menu.selectedBackground : "transparent"
-              border.color: Color.menu.border
-              border.width: 1
+              border.color: resetMouse.activeFocus ? Color.accent : Color.menu.border
+              border.width: resetMouse.activeFocus ? 2 : 1
               Text { id: resetLabel; anchors.centerIn: parent; text: "Reset"; color: Color.foreground; font.family: Style.font.family; font.pixelSize: Style.font.body }
               MouseArea {
                 id: resetMouse
                 anchors.fill: parent
+                activeFocusOnTab: true
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: root.resetToDefaults()
+                Keys.onPressed: function(event) {
+                  if (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Space) return
+                  root.resetToDefaults()
+                  event.accepted = true
+                }
               }
             }
             Rectangle {
@@ -551,14 +741,130 @@ Item {
               height: Style.space(38)
               radius: Style.cornerRadius / 2
               color: root.dirty ? (saveMouse.containsMouse ? Qt.lighter(Color.accent, 1.08) : Color.accent) : Color.menu.border
+              Rectangle {
+                anchors.fill: parent
+                anchors.margins: -Style.space(3)
+                radius: parent.radius + Style.space(3)
+                color: "transparent"
+                border.color: Color.foreground
+                border.width: 2
+                visible: saveMouse.activeFocus
+              }
               Text { id: saveLabel; anchors.centerIn: parent; text: "Save"; color: Color.background; font.family: Style.font.family; font.pixelSize: Style.font.body; font.bold: true }
               MouseArea {
                 id: saveMouse
                 anchors.fill: parent
+                activeFocusOnTab: true
                 hoverEnabled: true
                 enabled: root.dirty
                 cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                 onClicked: if (enabled) root.save()
+                Keys.onPressed: function(event) {
+                  if (!enabled || (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Space)) return
+                  root.save()
+                  event.accepted = true
+                }
+              }
+            }
+          }
+        }
+      }
+
+      Item {
+        anchors.fill: parent
+        visible: root.shortcutsVisible
+        z: 100
+
+        Rectangle {
+          anchors.fill: parent
+          color: Color.menu.background
+          opacity: 0.92
+        }
+
+        Rectangle {
+          anchors.centerIn: parent
+          width: Math.min(Style.space(560), parent.width - Style.space(48))
+          height: shortcutsLayout.implicitHeight + Style.space(36)
+          radius: Style.cornerRadius
+          color: Color.menu.background
+          border.color: Color.menu.border
+          border.width: 1
+
+          ColumnLayout {
+            id: shortcutsLayout
+            anchors.fill: parent
+            anchors.margins: Style.space(18)
+            spacing: Style.space(6)
+
+            RowLayout {
+              Layout.fillWidth: true
+              Layout.bottomMargin: Style.space(6)
+              Text {
+                Layout.fillWidth: true
+                text: "Keyboard shortcuts"
+                color: Color.foreground
+                font.family: Style.font.family
+                font.pixelSize: Style.font.heading
+                font.bold: true
+              }
+              Rectangle {
+                width: Style.space(34)
+                height: Style.space(34)
+                radius: Style.cornerRadius / 2
+                color: shortcutsCloseMouse.containsMouse ? Color.menu.selectedBackground : "transparent"
+                border.color: shortcutsCloseMouse.activeFocus ? Color.accent : Color.menu.border
+                border.width: shortcutsCloseMouse.activeFocus ? 2 : 1
+                Text {
+                  anchors.centerIn: parent
+                  text: "×"
+                  color: Color.foreground
+                  font.family: Style.font.family
+                  font.pixelSize: Style.font.heading
+                }
+                MouseArea {
+                  id: shortcutsCloseMouse
+                  anchors.fill: parent
+                  activeFocusOnTab: true
+                  hoverEnabled: true
+                  cursorShape: Qt.PointingHandCursor
+                  onClicked: root.hideShortcuts()
+                  Keys.onPressed: function(event) {
+                    if (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Space) return
+                    root.hideShortcuts()
+                    event.accepted = true
+                  }
+                }
+              }
+            }
+
+            Repeater {
+              model: root.shortcutItems
+              delegate: RowLayout {
+                required property var modelData
+                Layout.fillWidth: true
+                spacing: Style.space(14)
+                Rectangle {
+                  Layout.preferredWidth: Style.space(145)
+                  Layout.preferredHeight: Style.space(28)
+                  radius: Style.cornerRadius / 2
+                  color: Color.menu.selectedBackground
+                  Text {
+                    anchors.centerIn: parent
+                    text: modelData.keys
+                    color: Color.foreground
+                    font.family: Style.font.family
+                    font.pixelSize: Style.font.bodySmall
+                    font.bold: true
+                  }
+                }
+                Text {
+                  Layout.fillWidth: true
+                  text: modelData.action
+                  color: Color.foreground
+                  font.family: Style.font.family
+                  font.pixelSize: Style.font.bodySmall
+                  elide: Text.ElideRight
+                }
               }
             }
           }

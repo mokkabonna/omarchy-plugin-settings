@@ -21,6 +21,15 @@ instance can be configured independently.
 - `Super+W` or the window close button: close the window.
 - `Escape`: close the window.
 - `Ctrl+S`: save pending changes.
+- `Ctrl+R`: reset the selected widget to its manifest defaults.
+- `Ctrl+W`: close the window.
+- `Up` / `Down`, `Home` / `End`: navigate the widget list when it is focused.
+- `Ctrl+1` through `Ctrl+9`: select the corresponding widget in the list.
+- `Tab` / `Shift+Tab`: move between interactive controls; `Enter` or `Space`:
+  activate the focused control.
+- `Up` / `Down` in a numeric field: adjust by its configured step (or 1).
+- `Page Up` / `Page Down`: scroll the settings form.
+- `?`: show or hide the in-window keyboard shortcut reference.
 
 The window opens centered and floating at 900×650, with a 680×480 minimum.
 
