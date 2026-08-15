@@ -355,6 +355,23 @@ Item {
     Qt.callLater(function() { shortcutsMouse.forceActiveFocus() })
   }
 
+  function focusFirstFormControl() {
+    var pending = []
+    if (form.children)
+      for (var first = 0; first < form.children.length; first++) pending.push(form.children[first])
+    while (pending.length > 0) {
+      var item = pending.shift()
+      if (!item || !item.visible || !item.enabled) continue
+      if (item.activeFocusOnTab && typeof item.forceActiveFocus === "function") {
+        item.forceActiveFocus()
+        return true
+      }
+      if (item.children)
+        for (var i = 0; i < item.children.length; i++) pending.push(item.children[i])
+    }
+    return false
+  }
+
   FloatingWindow {
     id: window
     title: "Plugin Settings"
@@ -495,6 +512,12 @@ Item {
                 }
               }
               Keys.onPressed: function(event) {
+                if (event.key === Qt.Key_Tab) {
+                  if (event.modifiers & Qt.ShiftModifier) closeMouse.forceActiveFocus()
+                  else root.focusFirstFormControl()
+                  event.accepted = true
+                  return
+                }
                 if (event.modifiers !== Qt.NoModifier) return
                 if (event.key === Qt.Key_Up) root.selectRelativeWidget(-1)
                 else if (event.key === Qt.Key_Down) root.selectRelativeWidget(1)
@@ -548,9 +571,14 @@ Item {
                 cursorShape: Qt.PointingHandCursor
                 onClicked: root.toggleShortcuts()
                 Keys.onPressed: function(event) {
-                  if (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Space) return
-                  root.toggleShortcuts()
-                  event.accepted = true
+                  if (event.key === Qt.Key_Tab) {
+                    if (event.modifiers & Qt.ShiftModifier) saveMouse.forceActiveFocus()
+                    else closeMouse.forceActiveFocus()
+                    event.accepted = true
+                  } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+                    root.toggleShortcuts()
+                    event.accepted = true
+                  }
                 }
               }
             }
@@ -576,9 +604,14 @@ Item {
                 cursorShape: Qt.PointingHandCursor
                 onClicked: root.requestClose()
                 Keys.onPressed: function(event) {
-                  if (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Space) return
-                  root.requestClose()
-                  event.accepted = true
+                  if (event.key === Qt.Key_Tab) {
+                    if (event.modifiers & Qt.ShiftModifier) shortcutsMouse.forceActiveFocus()
+                    else widgetList.forceActiveFocus()
+                    event.accepted = true
+                  } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+                    root.requestClose()
+                    event.accepted = true
+                  }
                 }
               }
             }
@@ -611,6 +644,7 @@ Item {
                 model: root.schema
                 delegate: ColumnLayout {
                   required property var modelData
+                  required property int index
                   Layout.fillWidth: true
                   spacing: Style.space(1)
                   Text {
@@ -640,6 +674,7 @@ Item {
 
                     TextInput {
                       activeFocusOnTab: true
+                      KeyNavigation.backtab: index === 0 ? widgetList : null
                       anchors.fill: parent
                       anchors.leftMargin: Style.space(10)
                       anchors.rightMargin: Style.space(10)
@@ -710,6 +745,7 @@ Item {
                       MouseArea {
                         id: booleanToggleMouse
                         anchors.fill: parent; activeFocusOnTab: true
+                        KeyNavigation.backtab: index === 0 ? widgetList : null
                         onClicked: root.setValue(modelData.key, root.valueFor(modelData) !== true)
                         Keys.onPressed: function(event) {
                           if (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Space) return
@@ -743,6 +779,7 @@ Item {
                       MouseArea {
                         id: enumToggleMouse
                         anchors.fill: parent; activeFocusOnTab: true
+                        KeyNavigation.backtab: index === 0 ? widgetList : null
                         onClicked: root.setValue(modelData.key, parent.checked ? "Off" : "On")
                         Keys.onPressed: function(event) {
                           if (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Space) return
@@ -756,6 +793,7 @@ Item {
                   ButtonGroup {
                     property var field: modelData
                     visible: modelData.type === "enum" && !root.isOnOffEnum(modelData)
+                    KeyNavigation.backtab: index === 0 ? widgetList : null
                     options: modelData.options || []
                     value: String(root.valueFor(modelData) === undefined ? "" : root.valueFor(modelData))
                     foreground: Color.foreground
@@ -794,6 +832,7 @@ Item {
                         MouseArea {
                           id: multiChoiceMouse
                           anchors.fill: parent; activeFocusOnTab: true; cursorShape: Qt.PointingHandCursor
+                          KeyNavigation.backtab: index === 0 ? widgetList : null
                           onClicked: root.toggleMultiselect(multiselectChoices.field, parent.value)
                           Keys.onPressed: function(event) {
                             if (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Space) return
@@ -872,9 +911,14 @@ Item {
                 cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
                 onClicked: if (enabled) root.save()
                 Keys.onPressed: function(event) {
-                  if (!enabled || (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Space)) return
-                  root.save()
-                  event.accepted = true
+                  if (event.key === Qt.Key_Tab) {
+                    if (event.modifiers & Qt.ShiftModifier) resetMouse.forceActiveFocus()
+                    else shortcutsMouse.forceActiveFocus()
+                    event.accepted = true
+                  } else if (enabled && (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space)) {
+                    root.save()
+                    event.accepted = true
+                  }
                 }
               }
             }
