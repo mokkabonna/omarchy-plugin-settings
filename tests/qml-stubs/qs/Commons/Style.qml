@@ -1,5 +1,5 @@
 pragma Singleton
-import QtQml
+import QtQuick
 
 QtObject {
   property var font: ({ family: "sans", heading: 16, body: 14, bodySmall: 12 })
