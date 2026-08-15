@@ -548,7 +548,8 @@ Item {
             Layout.fillWidth: true
             Text {
               Layout.fillWidth: true
-              text: root.selectedMetadata ? root.selectedMetadata.displayName : "No configurable item selected"
+              text: root.selectedMetadata && root.selectedMetadata.displayName
+                ? root.selectedMetadata.displayName : "No configurable item selected"
               color: Color.foreground
               font.family: Style.font.family
               font.pixelSize: Style.font.heading
@@ -625,8 +626,9 @@ Item {
           }
           Text {
             Layout.fillWidth: true
-            visible: root.selectedMetadata && root.selectedMetadata.description
-            text: root.selectedMetadata ? root.selectedMetadata.description : ""
+            visible: !!(root.selectedMetadata && root.selectedMetadata.description)
+            text: root.selectedMetadata && root.selectedMetadata.description
+              ? root.selectedMetadata.description : ""
             color: Color.foreground
             opacity: 0.65
             font.family: Style.font.family

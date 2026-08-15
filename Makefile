@@ -1,9 +1,10 @@
-.PHONY: check lint manifest whitespace act local install
+.PHONY: check test integration lint manifest whitespace act local install
 
 QML_FILES := Panel.qml BarWidget.qml
 QMLLINT ?= qmllint
 QMLLINT_ARGS ?=
 QMLLINT_IMPORT_PATH ?= tests/qml-stubs
+QMLTEST ?= /usr/lib/qt6/bin/qmltestrunner
 ACT ?= act
 PLUGIN_ID ?= mokkabonna.plugin-settings
 PLUGIN_DIR ?= $(HOME)/.config/omarchy/plugins
@@ -11,7 +12,15 @@ PLUGIN_PATH := $(PLUGIN_DIR)/$(PLUGIN_ID)
 PLUGIN_REPO ?= https://github.com/mokkabonna/omarchy-plugin-settings.git
 
 # Run every local validation check.
-check: lint manifest whitespace
+check: test integration lint manifest whitespace
+
+# Run QML behavior tests without requiring a display server.
+test:
+	QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORMTHEME= $(QMLTEST) -input tests -import $(QMLLINT_IMPORT_PATH) -import .
+
+# Test the local and downloaded plugin workflows in a temporary environment.
+integration:
+	bash tests/test_make.sh
 
 # Run QML lint against the plugin entry points and test stubs.
 lint:

@@ -89,6 +89,19 @@ Run the local checks before committing:
 make check
 ```
 
+This includes the QML behavior and Make integration tests. Run only the QML
+tests with:
+
+```bash
+make test
+```
+
+Run only the sandboxed Make workflow tests with:
+
+```bash
+make integration
+```
+
 To run the GitHub Actions check workflow locally, install
 [nektos/act](https://nektosact.com/installation/) and ensure Docker is
 running, then use:
