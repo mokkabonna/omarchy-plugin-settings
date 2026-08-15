@@ -57,6 +57,27 @@ omarchy-shell shell rescanPlugins
 omarchy plugin enable mokkabonna.plugin-settings --section right
 ```
 
+The same setup is available through Make:
+
+```bash
+make local
+```
+
+If an installed copy already occupies the plugin ID, `make local` moves it to
+a timestamped hidden backup before creating the development symlink.
+
+To download and use the repository version instead:
+
+```bash
+make install
+```
+
+The repository URL can be overridden, for example:
+
+```bash
+make install PLUGIN_REPO=https://github.com/your-fork/omarchy-plugin-settings.git
+```
+
 Omarchy automatically reloads changes made directly under its plugin
 directory. Its watcher does not follow this development symlink, so reload
 QML changes with `omarchy restart shell`; use `omarchy-shell shell
