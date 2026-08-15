@@ -4,6 +4,8 @@ Schema-driven settings editor for the Omarchy shell and its plugins. It adds a
 gear button to the bar that opens a floating, Hyprland-managed window where
 shell settings and supported plugin instances can be configured.
 
+![Plugin Settings window](example.png)
+
 ## Features
 
 - Provides forms for Omarchy bar appearance and idle timeouts.
