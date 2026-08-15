@@ -1,6 +1,6 @@
-.PHONY: check test integration lint manifest whitespace act local install
+.PHONY: check test integration lint manifest whitespace act local install reload
 
-QML_FILES := Panel.qml BarWidget.qml
+QML_FILES := Panel.qml BarWidget.qml SettingsController.qml SettingsField.qml ShortcutOverlay.qml
 QMLLINT ?= qmllint
 QMLLINT_ARGS ?=
 QMLLINT_IMPORT_PATH ?= tests/qml-stubs
@@ -41,6 +41,10 @@ whitespace:
 # Run the GitHub Actions check workflow locally with act and Docker.
 act:
 	$(ACT) push -W .github/workflows/check.yml
+
+# Reload QML changes by restarting the Omarchy shell.
+reload:
+	omarchy restart shell
 
 # Replace the installed plugin with a symlink to this checkout.
 local:

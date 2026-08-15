@@ -80,7 +80,7 @@ make install PLUGIN_REPO=https://github.com/your-fork/omarchy-plugin-settings.gi
 
 Omarchy automatically reloads changes made directly under its plugin
 directory. Its watcher does not follow this development symlink, so reload
-QML changes with `omarchy restart shell`; use `omarchy-shell shell
+QML changes with `make reload`; use `omarchy-shell shell
 rescanPlugins` after changing the manifest.
 
 Run the local checks before committing:
@@ -101,6 +101,11 @@ Run only the sandboxed Make workflow tests with:
 ```bash
 make integration
 ```
+
+The QML implementation is split by responsibility: `Panel.qml` owns the shell
+window and focus flow, `SettingsController.qml` owns discovery and persistence,
+`SettingsField.qml` renders schema fields, and `ShortcutOverlay.qml` renders
+the shortcut reference.
 
 To run the GitHub Actions check workflow locally, install
 [nektos/act](https://nektosact.com/installation/) and ensure Docker is

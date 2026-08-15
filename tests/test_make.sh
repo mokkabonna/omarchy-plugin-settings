@@ -27,6 +27,10 @@ if [[ "$1" == plugin && "$2" == add ]]; then
   printf '%s\n' "added $PLUGIN_ID" > "$TEST_ROOT/added"
   exit 0
 fi
+if [[ "$1" == restart && "$2" == shell ]]; then
+  printf '%s\n' "restarted shell" > "$TEST_ROOT/reloaded"
+  exit 0
+fi
 echo "unexpected omarchy command" >&2
 exit 1
 EOF
@@ -43,6 +47,9 @@ make -C "$repo_dir" local PLUGIN_DIR="$plugin_dir" >/dev/null
 test -L "$plugin_dir/$PLUGIN_ID"
 test "$(readlink -f "$plugin_dir/$PLUGIN_ID")" = "$repo_dir"
 test -f "$test_root/enabled"
+
+make -C "$repo_dir" reload >/dev/null
+test -f "$test_root/reloaded"
 
 rm "$plugin_dir/$PLUGIN_ID"
 mkdir -p "$plugin_dir/$PLUGIN_ID"

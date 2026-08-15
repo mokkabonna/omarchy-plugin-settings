@@ -20,7 +20,13 @@ TestCase {
       bar: { position: "bottom", transparent: true },
       idle: { screensaver: 120, lock: 240 }
     })
+    property int hideCalls: 0
+    property string hiddenId: ""
     function mutateShellConfig(callback) { callback(shellConfig) }
+    function hide(id) {
+      hideCalls++
+      hiddenId = id
+    }
   }
 
   QtObject {
@@ -98,6 +104,9 @@ TestCase {
     panel.draft = ({})
     panel.savedDraft = ({})
     panel.status = ""
+    panel.manifest = { id: "test.plugin-settings" }
+    shellFixture.hideCalls = 0
+    shellFixture.hiddenId = ""
   }
 
   function entryWith(id, kind) {
@@ -251,5 +260,19 @@ TestCase {
     compare(shellFixture.shellConfig.bar.layout.right.length, 0)
     compare(panel.status, "This item moved or is no longer enabled; select it again before saving")
     verify(panel.dirty)
+  }
+
+  function test_panel_open_close_and_host_close_request() {
+    panel.open("")
+    verify(panel.opened)
+    compare(panel.selectedId, "omarchy.shell.bar")
+
+    panel.requestClose()
+    compare(shellFixture.hideCalls, 1)
+    compare(shellFixture.hiddenId, "test.plugin-settings")
+
+    panel.close()
+    verify(!panel.opened)
+    verify(!panel.shortcutsVisible)
   }
 }
