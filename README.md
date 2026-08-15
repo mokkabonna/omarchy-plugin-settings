@@ -1,11 +1,12 @@
 # Plugin Settings
 
-Schema-driven settings editor for Omarchy plugins. It adds a gear button to
-the bar that opens a floating, Hyprland-managed window where each supported
-plugin instance can be configured independently.
+Schema-driven settings editor for the Omarchy shell and its plugins. It adds a
+gear button to the bar that opens a floating, Hyprland-managed window where
+shell settings and supported plugin instances can be configured.
 
 ## Features
 
+- Provides forms for Omarchy bar appearance and idle timeouts.
 - Lists enabled bar-widget instances, regular plugins, and the active full bar
   when they declare a supported manifest schema.
 - Writes changes only to the selected item in `~/.config/omarchy/shell.json`.
@@ -21,10 +22,10 @@ plugin instance can be configured independently.
 - `Super+W` or the window close button: close the window.
 - `Escape`: close the window.
 - `Ctrl+S`: save pending changes.
-- `Ctrl+R`: reset the selected item to its manifest defaults.
+- `Ctrl+R`: reset the selected item to its defaults.
 - `Ctrl+W`: close the window.
-- `Up` / `Down`, `Home` / `End`: navigate the widget list when it is focused.
-- `Ctrl+1` through `Ctrl+9`: select the corresponding widget in the list.
+- `Up` / `Down`, `Home` / `End`: navigate the item list when it is focused.
+- `Ctrl+1` through `Ctrl+9`: select the corresponding item in the list.
 - `Tab` / `Shift+Tab`: move between interactive controls; `Enter` or `Space`:
   activate the focused control.
 - `Up` / `Down` in a numeric field: adjust by its configured step (or 1).
@@ -63,6 +64,10 @@ QML changes with `omarchy restart shell`; use `omarchy-shell shell
 rescanPlugins` after changing the manifest.
 
 ## Scope
+
+The built-in Bar and Idle forms patch their corresponding top-level sections
+without replacing layout or other unknown values. Reset reads Omarchy's live
+default configuration rather than hardcoding values.
 
 Bar widgets use Omarchy's existing `barWidget.schema` and `barWidget.defaults`
 fields. Other plugin kinds use this plugin's lightweight `settings` convention:

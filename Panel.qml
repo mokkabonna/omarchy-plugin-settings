@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import qs.Commons
+import qs.Ui
 
 Item {
   id: root
@@ -31,7 +32,7 @@ Item {
     { keys: "↑ / ↓ in number", action: "Adjust by the configured step" },
     { keys: "Page Up / Down", action: "Scroll the settings form" },
     { keys: "Ctrl+S", action: "Save pending changes" },
-    { keys: "Ctrl+R", action: "Reset to manifest defaults" },
+    { keys: "Ctrl+R", action: "Reset to defaults" },
     { keys: "Esc / Ctrl+W", action: "Close" },
     { keys: "?", action: "Show or hide this reference" }
   ]
@@ -66,6 +67,56 @@ Item {
       }
     }
     return result
+  }
+
+  function shellDefinition(section) {
+    var defaultsConfig = shell && shell.defaultsConfig ? shell.defaultsConfig : {}
+    if (section === "bar") {
+      var barDefaults = defaultsConfig.bar || {}
+      return {
+        displayName: "Bar",
+        description: "Configure the Omarchy shell bar.",
+        defaults: {
+          position: barDefaults.position !== undefined ? barDefaults.position : "top",
+          transparent: barDefaults.transparent !== undefined ? barDefaults.transparent : false
+        },
+        schema: [
+          { key: "position", label: "Position", description: "Screen edge used by the bar.", type: "enum",
+            options: ["top", "bottom", "left", "right"] },
+          { key: "transparent", label: "Transparent", description: "Use the wallpaper-aware transparent bar style.", type: "boolean" }
+        ]
+      }
+    }
+    var idleDefaults = defaultsConfig.idle || {}
+    return {
+      displayName: "Idle",
+      description: "Configure Omarchy screensaver and lock timeouts.",
+      defaults: {
+        screensaver: idleDefaults.screensaver !== undefined ? idleDefaults.screensaver : 150,
+        lock: idleDefaults.lock !== undefined ? idleDefaults.lock : 300
+      },
+      schema: [
+        { key: "screensaver", label: "Screensaver timeout", description: "Seconds of inactivity before the screensaver starts.",
+          type: "integer", min: 0, step: 30 },
+        { key: "lock", label: "Lock timeout", description: "Seconds of inactivity before the session locks.",
+          type: "integer", min: 0, step: 30 }
+      ]
+    }
+  }
+
+  function shellSettingsEntries() {
+    if (!shell || !shell.shellConfig) return []
+    var config = shell.shellConfig
+    var bar = config.bar || {}
+    var idle = config.idle || {}
+    return [
+      { kind: "shell", id: "omarchy.shell.bar", section: "bar", index: -1,
+        entry: { position: bar.position, transparent: bar.transparent },
+        metadata: shellDefinition("bar"), locationLabel: "Omarchy shell" },
+      { kind: "shell", id: "omarchy.shell.idle", section: "idle", index: -1,
+        entry: { screensaver: idle.screensaver, lock: idle.lock },
+        metadata: shellDefinition("idle"), locationLabel: "Omarchy shell" }
+    ]
   }
 
   function pluginInstancesWithSchemas() {
@@ -104,7 +155,7 @@ Item {
   }
 
   function configurableEntries() {
-    return widgetInstancesWithSchemas().concat(pluginInstancesWithSchemas())
+    return shellSettingsEntries().concat(widgetInstancesWithSchemas(), pluginInstancesWithSchemas())
   }
 
   function selectWidget(instance) {
@@ -198,7 +249,9 @@ Item {
       else if (field.defaultValue !== undefined) next[field.key] = field.defaultValue
     }
     draft = next
-    status = "Reset to manifest defaults — save to apply"
+    status = selectedKind === "shell"
+      ? "Reset to Omarchy defaults — save to apply"
+      : "Reset to manifest defaults — save to apply"
   }
 
   function save() {
@@ -223,7 +276,19 @@ Item {
     shell.mutateShellConfig(function(config) {
       var next = { id: selectedId }
       for (var name in values) next[name] = values[name]
-      if (selectedKind === "bar-widget") {
+      if (selectedKind === "shell") {
+        var target = null
+        if (selectedSection === "bar") {
+          if (!config.bar || typeof config.bar !== "object") config.bar = {}
+          target = config.bar
+        } else if (selectedSection === "idle") {
+          if (!config.idle || typeof config.idle !== "object") config.idle = {}
+          target = config.idle
+        }
+        if (!target) return
+        for (var shellKey in values) target[shellKey] = values[shellKey]
+        saved = true
+      } else if (selectedKind === "bar-widget") {
         var layout = config.bar && config.bar.layout ? config.bar.layout : {}
         var entries = layout[selectedSection] || []
         if (!entries[selectedIndex] || entries[selectedIndex].id !== selectedId) return
@@ -372,7 +437,7 @@ Item {
             }
             Text {
               Layout.fillWidth: true
-              text: "Schema-enabled plugins and bars"
+              text: "Omarchy shell and schema-enabled plugins"
               color: Color.foreground
               opacity: 0.65
               font.family: Style.font.family
@@ -688,33 +753,17 @@ Item {
                     }
                     Text { text: String(root.valueFor(modelData)).toLowerCase() === "on" ? "On" : "Off"; color: Color.foreground; font.family: Style.font.family; font.pixelSize: Style.font.body }
                   }
-                  RowLayout {
-                    id: enumChoices
+                  ButtonGroup {
                     property var field: modelData
                     visible: modelData.type === "enum" && !root.isOnOffEnum(modelData)
-                    Repeater {
-                      model: modelData.options || []
-                      delegate: Rectangle {
-                        required property var modelData
-                        readonly property string value: typeof modelData === "object" ? modelData.value : modelData
-                        width: choiceLabel.implicitWidth + Style.space(2); height: choiceLabel.implicitHeight + Style.space(1)
-                        radius: Style.cornerRadius / 2
-                        color: root.valueFor(enumChoices.field) === value ? Color.menu.selectedBackground : "transparent"
-                        border.color: enumChoiceMouse.activeFocus ? Color.accent : Color.menu.border
-                        border.width: enumChoiceMouse.activeFocus ? 2 : 1
-                        Text { id: choiceLabel; anchors.centerIn: parent; text: typeof modelData === "object" ? (modelData.label || value) : value; color: Color.foreground; font.family: Style.font.family; font.pixelSize: Style.font.bodySmall }
-                        MouseArea {
-                          id: enumChoiceMouse
-                          anchors.fill: parent; activeFocusOnTab: true
-                          onClicked: root.setValue(enumChoices.field.key, parent.value)
-                          Keys.onPressed: function(event) {
-                            if (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Space) return
-                            root.setValue(enumChoices.field.key, parent.value)
-                            event.accepted = true
-                          }
-                        }
-                      }
-                    }
+                    options: modelData.options || []
+                    value: String(root.valueFor(modelData) === undefined ? "" : root.valueFor(modelData))
+                    foreground: Color.foreground
+                    background: Color.menu.background
+                    accent: Color.accent
+                    fontFamily: Style.font.family
+                    fontSize: Style.font.bodySmall
+                    onChanged: function(value) { root.setValue(field.key, value) }
                   }
                   Flow {
                     id: multiselectChoices
