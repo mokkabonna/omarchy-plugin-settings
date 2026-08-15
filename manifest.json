@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "local.plugin-settings",
+  "id": "mokkabonna.plugin-settings",
   "name": "Plugin Settings",
   "version": "0.1.0",
   "author": "Martin Hansen",

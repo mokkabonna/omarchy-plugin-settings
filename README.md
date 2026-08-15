@@ -26,11 +26,11 @@ The window opens centered and floating at 900×650, with a 680×480 minimum.
 
 ## Install
 
-Once this repository is hosted, install it with Omarchy's plugin manager:
+Install it with Omarchy's plugin manager:
 
 ```bash
-omarchy plugin add <repository-url>
-omarchy plugin enable local.plugin-settings --section right
+omarchy plugin add https://github.com/mokkabonna/omarchy-plugin-settings.git
+omarchy plugin enable mokkabonna.plugin-settings --section right
 ```
 
 Omarchy plugins run as unsandboxed code inside the shell. Review a plugin's
@@ -42,9 +42,9 @@ For a local checkout, link it into the user plugin directory, rescan, and
 enable it:
 
 ```bash
-ln -s "$(pwd)" ~/.config/omarchy/plugins/local.plugin-settings
+ln -s "$(pwd)" ~/.config/omarchy/plugins/mokkabonna.plugin-settings
 omarchy-shell shell rescanPlugins
-omarchy plugin enable local.plugin-settings --section right
+omarchy plugin enable mokkabonna.plugin-settings --section right
 ```
 
 Omarchy automatically reloads changes made directly under its plugin

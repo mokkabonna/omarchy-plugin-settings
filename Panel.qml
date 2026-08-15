@@ -170,7 +170,7 @@ Item {
   }
 
   function requestClose() {
-    if (shell && typeof shell.hide === "function") shell.hide((manifest && manifest.id) || "local.plugin-settings")
+    if (shell && typeof shell.hide === "function") shell.hide((manifest && manifest.id) || "mokkabonna.plugin-settings")
     else close()
   }
 
@@ -184,7 +184,7 @@ Item {
     minimumSize: Qt.size(680, 480)
     onVisibleChanged: {
       if (!visible && !root.closingFromHost && root.shell && typeof root.shell.hide === "function")
-        root.shell.hide((root.manifest && root.manifest.id) || "local.plugin-settings")
+        root.shell.hide((root.manifest && root.manifest.id) || "mokkabonna.plugin-settings")
     }
 
     Rectangle {

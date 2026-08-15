@@ -4,7 +4,7 @@ import qs.Ui
 
 BarWidget {
   id: root
-  moduleName: "local.plugin-settings"
+  moduleName: "mokkabonna.plugin-settings"
   implicitWidth: barSize
   implicitHeight: barSize
 
@@ -18,7 +18,7 @@ BarWidget {
     tooltipText: "Plugin Settings"
     onPressed: function(button) {
       if (button === Qt.LeftButton && root.bar)
-        root.bar.run("omarchy-shell shell toggle local.plugin-settings")
+        root.bar.run("omarchy-shell shell toggle mokkabonna.plugin-settings")
     }
   }
 }
