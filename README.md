@@ -62,6 +62,12 @@ directory. Its watcher does not follow this development symlink, so reload
 QML changes with `omarchy restart shell`; use `omarchy-shell shell
 rescanPlugins` after changing the manifest.
 
+Run the local checks before committing:
+
+```bash
+make check
+```
+
 ## Scope
 
 The built-in Bar and Idle forms patch their corresponding top-level sections
