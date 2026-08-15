@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "local.plugin-settings",
+  "name": "Plugin Settings",
+  "version": "0.1.0",
+  "author": "Martin Hansen",
+  "description": "Configure schema-enabled Omarchy bar widgets.",
+  "kinds": ["panel", "bar-widget"],
+  "entryPoints": {
+    "panel": "Panel.qml",
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Plugin Settings",
+    "description": "Open the schema-driven plugin settings window.",
+    "category": "System",
+    "defaultSection": "right",
+    "allowMultiple": false
+  }
+}
