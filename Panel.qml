@@ -9,20 +9,23 @@ Item {
   property var shell: null
   property var manifest: null
   property var barWidgetRegistry: null
+  property var pluginRegistry: null
   property bool opened: false
   property bool closingFromHost: false
   property string selectedId: ""
+  property string selectedKind: ""
   property string selectedSection: ""
   property int selectedIndex: -1
+  property var selectedDefinition: null
   property var draft: ({})
   property var savedDraft: ({})
   property string status: ""
   property bool shortcutsVisible: false
 
   readonly property var shortcutItems: [
-    { keys: "↑ / ↓", action: "Previous / next widget" },
-    { keys: "Home / End", action: "First / last widget" },
-    { keys: "Ctrl+1 … 9", action: "Select widget by list position" },
+    { keys: "↑ / ↓", action: "Previous / next item" },
+    { keys: "Home / End", action: "First / last item" },
+    { keys: "Ctrl+1 … 9", action: "Select item by list position" },
     { keys: "Tab / Shift+Tab", action: "Move keyboard focus" },
     { keys: "Enter / Space", action: "Activate the focused control" },
     { keys: "↑ / ↓ in number", action: "Adjust by the configured step" },
@@ -35,8 +38,7 @@ Item {
 
   readonly property bool dirty: JSON.stringify(draft) !== JSON.stringify(savedDraft)
 
-  readonly property var selectedMetadata: barWidgetRegistry && selectedId
-    ? barWidgetRegistry.metadataFor(selectedId) : null
+  readonly property var selectedMetadata: selectedDefinition
   readonly property var schema: selectedMetadata && selectedMetadata.schema
     ? selectedMetadata.schema : []
 
@@ -59,16 +61,58 @@ Item {
         if (!entry || !entry.id) continue
         var metadata = barWidgetRegistry.metadataFor(entry.id)
         if (metadata && metadata.schema && metadata.schema.length > 0)
-          result.push({ id: entry.id, section: sections[s], index: i, entry: entry, metadata: metadata })
+          result.push({ kind: "bar-widget", id: entry.id, section: sections[s], index: i, entry: entry,
+            metadata: metadata, locationLabel: sections[s] + " bar · instance " + (i + 1) })
       }
     }
     return result
   }
 
+  function pluginInstancesWithSchemas() {
+    if (!pluginRegistry || !pluginRegistry.installedPlugins || !shell || !shell.shellConfig) return []
+    var result = []
+    var config = shell.shellConfig
+    var plugins = config.plugins || []
+    var supportedKinds = ["panel", "overlay", "menu", "service"]
+    for (var id in pluginRegistry.installedPlugins) {
+      var pluginManifest = pluginRegistry.installedPlugins[id]
+      var definition = pluginManifest && pluginManifest.settings
+      if (!definition || !definition.schema || definition.schema.length === 0) continue
+      var kinds = pluginManifest.kinds || []
+      if (kinds.indexOf("bar") !== -1) {
+        if (config.bar && config.bar.id === id)
+          result.push({ kind: "bar", id: id, section: "bar", index: -1, entry: config.bar,
+            metadata: definition, locationLabel: "Active bar" })
+        continue
+      }
+      var supportsPluginSettings = false
+      for (var k = 0; k < supportedKinds.length; k++)
+        if (kinds.indexOf(supportedKinds[k]) !== -1) supportsPluginSettings = true
+      if (!supportsPluginSettings) continue
+      var found = false
+      for (var i = 0; i < plugins.length; i++) {
+        if (!plugins[i] || plugins[i].id !== id) continue
+        result.push({ kind: "plugin", id: id, section: "plugins", index: i, entry: plugins[i],
+          metadata: definition, locationLabel: "Plugin instance " + (i + 1) })
+        found = true
+      }
+      if (!found && pluginRegistry.isEnabled && pluginRegistry.isEnabled(id))
+        result.push({ kind: "plugin", id: id, section: "plugins", index: -1, entry: { id: id },
+          metadata: definition, locationLabel: "Plugin defaults" })
+    }
+    return result
+  }
+
+  function configurableEntries() {
+    return widgetInstancesWithSchemas().concat(pluginInstancesWithSchemas())
+  }
+
   function selectWidget(instance) {
     selectedId = instance.id
+    selectedKind = instance.kind
     selectedSection = instance.section
     selectedIndex = instance.index
+    selectedDefinition = instance.metadata
     status = ""
     var next = ({})
     for (var key in instance.entry) if (key !== "id") next[key] = instance.entry[key]
@@ -77,11 +121,11 @@ Item {
   }
 
   function selectRelativeWidget(offset) {
-    var widgets = widgetInstancesWithSchemas()
+    var widgets = configurableEntries()
     if (widgets.length === 0) return
     var current = -1
     for (var i = 0; i < widgets.length; i++) {
-      if (widgets[i].id === selectedId && widgets[i].section === selectedSection
+      if (widgets[i].id === selectedId && widgets[i].kind === selectedKind && widgets[i].section === selectedSection
           && widgets[i].index === selectedIndex) {
         current = i
         break
@@ -93,7 +137,7 @@ Item {
   }
 
   function selectWidgetAt(listIndex) {
-    var widgets = widgetInstancesWithSchemas()
+    var widgets = configurableEntries()
     if (listIndex < 0 || listIndex >= widgets.length) return
     selectWidget(widgets[listIndex])
     widgetList.positionViewAtIndex(listIndex, ListView.Contain)
@@ -158,7 +202,7 @@ Item {
   }
 
   function save() {
-    if (!shell || !selectedId || selectedIndex < 0 || typeof shell.mutateShellConfig !== "function") return
+    if (!shell || !selectedId || !selectedKind || typeof shell.mutateShellConfig !== "function") return
     var values = ({})
     for (var key in draft) values[key] = draft[key]
     for (var i = 0; i < schema.length; i++) {
@@ -175,19 +219,37 @@ Item {
       }
     }
     var saved = false
+    var persistedIndex = selectedIndex
     shell.mutateShellConfig(function(config) {
-      var layout = config.bar && config.bar.layout ? config.bar.layout : {}
-      var entries = layout[selectedSection] || []
-      if (!entries[selectedIndex] || entries[selectedIndex].id !== selectedId) return
       var next = { id: selectedId }
       for (var name in values) next[name] = values[name]
-      entries[selectedIndex] = next
-      saved = true
+      if (selectedKind === "bar-widget") {
+        var layout = config.bar && config.bar.layout ? config.bar.layout : {}
+        var entries = layout[selectedSection] || []
+        if (!entries[selectedIndex] || entries[selectedIndex].id !== selectedId) return
+        entries[selectedIndex] = next
+        saved = true
+      } else if (selectedKind === "bar") {
+        if (!config.bar || config.bar.id !== selectedId) return
+        config.bar = next
+        saved = true
+      } else if (selectedKind === "plugin") {
+        if (!Array.isArray(config.plugins)) config.plugins = []
+        if (selectedIndex >= 0) {
+          if (!config.plugins[selectedIndex] || config.plugins[selectedIndex].id !== selectedId) return
+          config.plugins[selectedIndex] = next
+        } else {
+          config.plugins.push(next)
+          persistedIndex = config.plugins.length - 1
+        }
+        saved = true
+      }
     })
     if (!saved) {
-      status = "This widget moved; select it again before saving"
+      status = "This item moved or is no longer enabled; select it again before saving"
       return
     }
+    selectedIndex = persistedIndex
     draft = values
     savedDraft = JSON.parse(JSON.stringify(values))
     status = "Saved to shell.json"
@@ -197,8 +259,8 @@ Item {
     opened = true
     shortcutsVisible = false
     window.visible = true
-    var widgets = widgetInstancesWithSchemas()
-    if ((!selectedId || selectedIndex < 0) && widgets.length > 0) selectWidget(widgets[0])
+    var entries = configurableEntries()
+    if ((!selectedId || !selectedKind) && entries.length > 0) selectWidget(entries[0])
   }
 
   function close() {
@@ -310,7 +372,7 @@ Item {
             }
             Text {
               Layout.fillWidth: true
-              text: "Schema-enabled bar widgets"
+              text: "Schema-enabled plugins and bars"
               color: Color.foreground
               opacity: 0.65
               font.family: Style.font.family
@@ -325,14 +387,15 @@ Item {
               Layout.fillWidth: true
               Layout.fillHeight: true
               clip: true
-              model: root.widgetInstancesWithSchemas()
+              model: root.configurableEntries()
               delegate: Rectangle {
                 required property var modelData
                 width: widgetList.width
                 height: 54
                 radius: Style.cornerRadius / 2
                 readonly property bool selectedInstance: root.selectedId === modelData.id
-                  && root.selectedSection === modelData.section && root.selectedIndex === modelData.index
+                  && root.selectedKind === modelData.kind && root.selectedSection === modelData.section
+                  && root.selectedIndex === modelData.index
                 color: selectedInstance ? Color.menu.selectedBackground : "transparent"
                 border.color: widgetList.activeFocus && selectedInstance ? Color.accent : "transparent"
                 border.width: widgetList.activeFocus && selectedInstance ? 2 : 0
@@ -350,7 +413,7 @@ Item {
                   }
                   Text {
                     width: parent.width
-                    text: modelData.section + " bar · instance " + (modelData.index + 1)
+                    text: modelData.locationLabel
                     color: Color.foreground
                     opacity: 0.6
                     font.family: Style.font.family
@@ -390,7 +453,7 @@ Item {
             Layout.fillWidth: true
             Text {
               Layout.fillWidth: true
-              text: root.selectedMetadata ? root.selectedMetadata.displayName : "No configurable widget selected"
+              text: root.selectedMetadata ? root.selectedMetadata.displayName : "No configurable item selected"
               color: Color.foreground
               font.family: Style.font.family
               font.pixelSize: Style.font.heading

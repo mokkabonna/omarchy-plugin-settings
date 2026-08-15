@@ -1,14 +1,14 @@
 # Plugin Settings
 
-Schema-driven settings editor for Omarchy bar widgets. It adds a gear button to
-the bar that opens a floating, Hyprland-managed window where each widget
-instance can be configured independently.
+Schema-driven settings editor for Omarchy plugins. It adds a gear button to
+the bar that opens a floating, Hyprland-managed window where each supported
+plugin instance can be configured independently.
 
 ## Features
 
-- Lists every enabled bar-widget instance that declares a manifest schema.
-- Writes changes only to the selected instance's entry in
-  `~/.config/omarchy/shell.json`.
+- Lists enabled bar-widget instances, regular plugins, and the active full bar
+  when they declare a supported manifest schema.
+- Writes changes only to the selected item in `~/.config/omarchy/shell.json`.
 - Renders `string`, `path`, `integer`, `number`, `boolean`, `enum`, and
   `multiselect` fields.
 - Enforces numeric `min`, `max`, and `step` constraints.
@@ -21,7 +21,7 @@ instance can be configured independently.
 - `Super+W` or the window close button: close the window.
 - `Escape`: close the window.
 - `Ctrl+S`: save pending changes.
-- `Ctrl+R`: reset the selected widget to its manifest defaults.
+- `Ctrl+R`: reset the selected item to its manifest defaults.
 - `Ctrl+W`: close the window.
 - `Up` / `Down`, `Home` / `End`: navigate the widget list when it is focused.
 - `Ctrl+1` through `Ctrl+9`: select the corresponding widget in the list.
@@ -31,7 +31,8 @@ instance can be configured independently.
 - `Page Up` / `Page Down`: scroll the settings form.
 - `?`: show or hide the in-window keyboard shortcut reference.
 
-The window opens centered and floating at 900×650, with a 680×480 minimum.
+The window requests a 900×650 size with a 680×480 minimum. Hyprland controls
+whether it floats, tiles, and where it appears.
 
 ## Install
 
@@ -63,6 +64,20 @@ rescanPlugins` after changing the manifest.
 
 ## Scope
 
-The manifest form format is deliberately flat. Nested values and plugin-owned
-`settingsForm` UIs require a separate convention and are not rendered by this
-plugin.
+Bar widgets use Omarchy's existing `barWidget.schema` and `barWidget.defaults`
+fields. Other plugin kinds use this plugin's lightweight `settings` convention:
+
+```json
+"settings": {
+  "displayName": "My Plugin",
+  "defaults": { "enabled": true },
+  "schema": [
+    { "key": "enabled", "type": "boolean", "label": "Enabled" }
+  ]
+}
+```
+
+The convention applies to `panel`, `overlay`, `menu`, and `service` plugins;
+their values are saved to the matching entry in `plugins[]`. For a full `bar`
+plugin, values are saved to the active `bar` entry. The form format is flat:
+nested values and plugin-owned `settingsForm` UIs are not rendered.

@@ -4,7 +4,7 @@
   "name": "Plugin Settings",
   "version": "0.1.0",
   "author": "Martin Hansen",
-  "description": "Configure schema-enabled Omarchy bar widgets.",
+  "description": "Configure schema-enabled Omarchy plugins and bars.",
   "kinds": ["panel", "bar-widget"],
   "entryPoints": {
     "panel": "Panel.qml",
