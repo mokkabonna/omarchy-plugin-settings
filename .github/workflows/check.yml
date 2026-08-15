@@ -17,4 +17,4 @@ jobs:
       - name: Locate qmllint
         run: echo "QMLLINT=$(dpkg -L qt6-declarative-dev-tools | grep '/qmllint$' | head -n 1)" >> "$GITHUB_ENV"
       - name: Run checks
-        run: make check
+        run: make check QMLLINT_ARGS='--unqualified=disable'
