@@ -1,8 +1,8 @@
 # Plugin Settings
 
 Schema-driven settings editor for the Omarchy shell and its plugins. It adds a
-gear button to the bar that opens a floating, Hyprland-managed window where
-shell settings and supported plugin instances can be configured.
+gear button to the bar that opens a settings window where shell settings and
+supported plugin instances can be configured.
 
 ![Plugin Settings window](example.png)
 
@@ -21,7 +21,7 @@ shell settings and supported plugin instances can be configured.
 ## Interactions
 
 - Bar gear: toggle the settings window.
-- `Super+W` or the window close button: close the window.
+- Window close button: close the window.
 - `Escape`: close the window.
 - `Ctrl+S`: save pending changes.
 - `Ctrl+R`: reset the selected item to its defaults.
@@ -33,9 +33,6 @@ shell settings and supported plugin instances can be configured.
 - `Up` / `Down` in a numeric field: adjust by its configured step (or 1).
 - `Page Up` / `Page Down`: scroll the settings form.
 - `?`: show or hide the in-window keyboard shortcut reference.
-
-The window requests a 900×650 size with a 680×480 minimum. Hyprland controls
-whether it floats, tiles, and where it appears.
 
 ## Install
 
