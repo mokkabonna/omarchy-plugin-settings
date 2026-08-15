@@ -1,0 +1,4 @@
+module qs.Ui
+ButtonGroup 1.0 ButtonGroup.qml
+BarWidget 1.0 BarWidget.qml
+WidgetButton 1.0 WidgetButton.qml
