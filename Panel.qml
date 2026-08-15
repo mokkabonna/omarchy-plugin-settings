@@ -63,7 +63,7 @@ Item {
         var metadata = barWidgetRegistry.metadataFor(entry.id)
         if (metadata && metadata.schema && metadata.schema.length > 0)
           result.push({ kind: "bar-widget", id: entry.id, section: sections[s], index: i, entry: entry,
-            metadata: metadata, locationLabel: sections[s] + " bar · instance " + (i + 1) })
+            metadata: metadata, locationLabel: sections[s] + " bar · position " + (i + 1) })
       }
     }
     return result
