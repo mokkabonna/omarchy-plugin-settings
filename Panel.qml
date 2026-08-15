@@ -343,16 +343,13 @@ Item {
 
   function toggleShortcuts() {
     shortcutsVisible = !shortcutsVisible
-    if (shortcutsVisible)
-      Qt.callLater(function() { shortcutsCloseMouse.forceActiveFocus() })
-    else
-      Qt.callLater(function() { shortcutsMouse.forceActiveFocus() })
+    shortcutsFocusTimer.restart()
   }
 
   function hideShortcuts() {
     if (!shortcutsVisible) return
     shortcutsVisible = false
-    Qt.callLater(function() { shortcutsMouse.forceActiveFocus() })
+    shortcutsFocusTimer.restart()
   }
 
   function focusFirstFormControl() {
@@ -370,6 +367,16 @@ Item {
         for (var i = 0; i < item.children.length; i++) pending.push(item.children[i])
     }
     return false
+  }
+
+  Timer {
+    id: shortcutsFocusTimer
+    interval: 0
+    repeat: false
+    onTriggered: {
+      if (root.shortcutsVisible) shortcutsCloseMouse.forceActiveFocus()
+      else shortcutsMouse.forceActiveFocus()
+    }
   }
 
   FloatingWindow {
@@ -461,7 +468,7 @@ Item {
               font.pixelSize: Style.font.bodySmall
               wrapMode: Text.WordWrap
             }
-            Rectangle { Layout.fillWidth: true; height: 1; color: Color.menu.border }
+            Rectangle { Layout.fillWidth: true; Layout.preferredHeight: 1; color: Color.menu.border }
 
             ListView {
               id: widgetList
@@ -530,7 +537,7 @@ Item {
           }
         }
 
-        Rectangle { Layout.fillHeight: true; width: 1; color: Color.menu.border }
+        Rectangle { Layout.fillHeight: true; Layout.preferredWidth: 1; color: Color.menu.border }
 
         ColumnLayout {
           Layout.fillWidth: true
@@ -549,8 +556,8 @@ Item {
               elide: Text.ElideRight
             }
             Rectangle {
-              width: shortcutsLabel.implicitWidth + Style.space(24)
-              height: Style.space(36)
+              Layout.preferredWidth: shortcutsLabel.implicitWidth + Style.space(24)
+              Layout.preferredHeight: Style.space(36)
               radius: Style.cornerRadius / 2
               color: shortcutsMouse.containsMouse ? Color.menu.selectedBackground : "transparent"
               border.color: shortcutsMouse.activeFocus ? Color.accent : Color.menu.border
@@ -583,8 +590,8 @@ Item {
               }
             }
             Rectangle {
-              width: Style.space(36)
-              height: Style.space(36)
+              Layout.preferredWidth: Style.space(36)
+              Layout.preferredHeight: Style.space(36)
               radius: Style.cornerRadius / 2
               color: closeMouse.containsMouse ? Color.menu.selectedBackground : "transparent"
               border.color: closeMouse.activeFocus ? Color.accent : Color.menu.border
@@ -727,7 +734,7 @@ Item {
                     spacing: Style.space(8)
                     Rectangle {
                       readonly property bool checked: root.valueFor(modelData) === true
-                      width: Style.space(42); height: Style.space(24); radius: height / 2
+                      Layout.preferredWidth: Style.space(42); Layout.preferredHeight: Style.space(24); radius: height / 2
                       color: checked ? Color.accent : Color.menu.background
                       border.color: booleanToggleMouse.activeFocus ? Color.foreground
                         : (checked ? Color.accent : Color.menu.border)
@@ -761,7 +768,7 @@ Item {
                     spacing: Style.space(8)
                     Rectangle {
                       readonly property bool checked: String(root.valueFor(modelData)).toLowerCase() === "on"
-                      width: Style.space(42); height: Style.space(24); radius: height / 2
+                      Layout.preferredWidth: Style.space(42); Layout.preferredHeight: Style.space(24); radius: height / 2
                       color: checked ? Color.accent : Color.menu.background
                       border.color: enumToggleMouse.activeFocus ? Color.foreground
                         : (checked ? Color.accent : Color.menu.border)
@@ -866,8 +873,8 @@ Item {
               font.pixelSize: Style.font.bodySmall
             }
             Rectangle {
-              width: resetLabel.implicitWidth + Style.space(24)
-              height: Style.space(38)
+              Layout.preferredWidth: resetLabel.implicitWidth + Style.space(24)
+              Layout.preferredHeight: Style.space(38)
               radius: Style.cornerRadius / 2
               color: resetMouse.containsMouse ? Color.menu.selectedBackground : "transparent"
               border.color: resetMouse.activeFocus ? Color.accent : Color.menu.border
@@ -888,8 +895,8 @@ Item {
               }
             }
             Rectangle {
-              width: saveLabel.implicitWidth + Style.space(28)
-              height: Style.space(38)
+              Layout.preferredWidth: saveLabel.implicitWidth + Style.space(28)
+              Layout.preferredHeight: Style.space(38)
               radius: Style.cornerRadius / 2
               color: root.dirty ? (saveMouse.containsMouse ? Qt.lighter(Color.accent, 1.08) : Color.accent) : Color.menu.border
               Rectangle {
@@ -964,8 +971,8 @@ Item {
                 font.bold: true
               }
               Rectangle {
-                width: Style.space(34)
-                height: Style.space(34)
+                Layout.preferredWidth: Style.space(34)
+                Layout.preferredHeight: Style.space(34)
                 radius: Style.cornerRadius / 2
                 color: shortcutsCloseMouse.containsMouse ? Color.menu.selectedBackground : "transparent"
                 border.color: shortcutsCloseMouse.activeFocus ? Color.accent : Color.menu.border

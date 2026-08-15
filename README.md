@@ -68,6 +68,14 @@ Run the local checks before committing:
 make check
 ```
 
+To run the GitHub Actions check workflow locally, install
+[nektos/act](https://nektosact.com/installation/) and ensure Docker is
+running, then use:
+
+```bash
+make act
+```
+
 ## Scope
 
 The built-in Bar and Idle forms patch their corresponding top-level sections

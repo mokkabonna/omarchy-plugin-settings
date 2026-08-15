@@ -1,9 +1,10 @@
-.PHONY: check lint manifest whitespace
+.PHONY: check lint manifest whitespace act
 
 QML_FILES := Panel.qml BarWidget.qml
 QMLLINT ?= qmllint
 QMLLINT_ARGS ?=
 QMLLINT_IMPORT_PATH ?= tests/qml-stubs
+ACT ?= act
 
 check: lint manifest whitespace
 
@@ -19,3 +20,6 @@ whitespace:
 	else \
 		git diff --check HEAD; \
 	fi
+
+act:
+	$(ACT) push -W .github/workflows/check.yml
