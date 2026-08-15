@@ -63,4 +63,20 @@ backup=$(find "$plugin_dir" -maxdepth 1 -name ".${PLUGIN_ID}.previous.*" -print 
 test -n "$backup"
 test -f "$backup/source"
 
+release_repo="$test_root/release-repo"
+cp -a "$repo_dir" "$release_repo"
+rm -rf "$release_repo/.git"
+git -C "$release_repo" init -q
+git -C "$release_repo" config user.name "Release Test"
+git -C "$release_repo" config user.email "release-test@example.test"
+git -C "$release_repo" config commit.gpgsign false
+git -C "$release_repo" add .
+git -C "$release_repo" commit -qm "Initial test state"
+
+make -C "$release_repo" release VERSION=9.8.7 RELEASE_CHECK=manifest >/dev/null
+test "$(jq -r '.version' "$release_repo/manifest.json")" = "9.8.7"
+test "$(git -C "$release_repo" log -1 --pretty=%s)" = "Release v9.8.7"
+git -C "$release_repo" rev-parse -q --verify refs/tags/v9.8.7 >/dev/null
+test -z "$(git -C "$release_repo" status --short)"
+
 printf '%s\n' "Make integration tests passed"

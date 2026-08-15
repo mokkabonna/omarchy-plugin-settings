@@ -115,6 +115,17 @@ running, then use:
 make act
 ```
 
+Create a release commit and annotated tag with:
+
+```bash
+make release VERSION=0.1.2
+```
+
+The release command requires a clean working tree, updates `manifest.json`,
+runs all checks, commits the version, and creates tag `v0.1.2`. It does not
+publish automatically; review the result and push it with the command printed
+at the end.
+
 ## Scope
 
 The built-in Bar and Idle forms patch their corresponding top-level sections

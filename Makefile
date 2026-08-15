@@ -1,4 +1,4 @@
-.PHONY: check test integration lint manifest whitespace act local install reload
+.PHONY: check test integration lint manifest whitespace act local install reload release
 
 QML_FILES := Panel.qml BarWidget.qml SettingsController.qml SettingsField.qml ShortcutOverlay.qml
 QMLLINT ?= qmllint
@@ -10,6 +10,7 @@ PLUGIN_ID ?= mokkabonna.plugin-settings
 PLUGIN_DIR ?= $(HOME)/.config/omarchy/plugins
 PLUGIN_PATH := $(PLUGIN_DIR)/$(PLUGIN_ID)
 PLUGIN_REPO ?= https://github.com/mokkabonna/omarchy-plugin-settings.git
+RELEASE_CHECK ?= check
 
 # Run every local validation check.
 check: test integration lint manifest whitespace
@@ -45,6 +46,39 @@ act:
 # Reload QML changes by restarting the Omarchy shell.
 reload:
 	omarchy restart shell
+
+# Validate, commit, and tag a release; publish it separately with git push.
+release:
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Usage: make release VERSION=x.y.z" >&2; \
+		exit 1; \
+	fi
+	@if ! printf '%s\n' "$(VERSION)" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$$'; then \
+		echo "VERSION must use x.y.z format" >&2; \
+		exit 1; \
+	fi
+	@if ! git diff --quiet || ! git diff --cached --quiet || [ -n "$$(git ls-files --others --exclude-standard)" ]; then \
+		echo "Release requires a clean working tree" >&2; \
+		exit 1; \
+	fi
+	@if git rev-parse -q --verify "refs/tags/v$(VERSION)" >/dev/null; then \
+		echo "Tag v$(VERSION) already exists" >&2; \
+		exit 1; \
+	fi
+	@if [ "$$(jq -r '.version' manifest.json)" = "$(VERSION)" ]; then \
+		echo "manifest.json is already at version $(VERSION)" >&2; \
+		exit 1; \
+	fi
+	@tmp="$$(mktemp ./manifest.json.release.XXXXXX)"; \
+	trap 'rm -f "$$tmp"' EXIT; \
+	jq --arg version "$(VERSION)" '.version = $$version' manifest.json > "$$tmp"; \
+	mv "$$tmp" manifest.json; \
+	trap - EXIT
+	$(MAKE) $(RELEASE_CHECK)
+	git add manifest.json
+	git commit -m "Release v$(VERSION)"
+	git tag -a "v$(VERSION)" -m "v$(VERSION)"
+	@echo "Created v$(VERSION). Publish with: git push origin HEAD v$(VERSION)"
 
 # Replace the installed plugin with a symlink to this checkout.
 local:
