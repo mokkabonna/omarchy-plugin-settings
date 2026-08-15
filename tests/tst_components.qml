@@ -44,7 +44,7 @@ Item {
       controller.savedDraft = ({ enabled: false })
       shortcutOverlay.visible = false
       closeSpy.clear()
-      waitForPolish(fieldUnderTest)
+      waitForItemPolished(fieldUnderTest)
     }
 
     function test_boolean_toggle_accepts_mouse_and_keyboard() {
@@ -61,7 +61,7 @@ Item {
       currentField = ({ key: "state", type: "enum", options: ["Off", "On"] })
       controller.selectedDefinition = { schema: [currentField], defaults: { state: "Off" } }
       controller.draft = ({ state: "Off" })
-      waitForPolish(fieldUnderTest)
+      waitForItemPolished(fieldUnderTest)
       tryVerify(function() { return fieldUnderTest.enumToggleControl.width > 0 })
 
       mouseClick(fieldUnderTest.enumToggleControl)
@@ -75,7 +75,7 @@ Item {
       currentField = ({ key: "count", type: "integer", min: 0, max: 60, step: 30 })
       controller.selectedDefinition = { schema: [currentField], defaults: { count: 0 } }
       controller.draft = ({ count: 30 })
-      waitForPolish(fieldUnderTest)
+      waitForItemPolished(fieldUnderTest)
       tryVerify(function() { return fieldUnderTest.inputControl.width > 0 })
 
       fieldUnderTest.inputControl.forceActiveFocus()
@@ -91,7 +91,7 @@ Item {
       currentField = ({ key: "mode", type: "enum", options: ["safe", "fast"] })
       controller.selectedDefinition = { schema: [currentField], defaults: { mode: "safe" } }
       controller.draft = ({ mode: "safe" })
-      waitForPolish(fieldUnderTest)
+      waitForItemPolished(fieldUnderTest)
 
       fieldUnderTest.enumOptionsControl.changed("fast")
       compare(controller.draft.mode, "fast")
@@ -101,7 +101,7 @@ Item {
       currentField = ({ key: "features", type: "multiselect", options: ["a", "b"] })
       controller.selectedDefinition = { schema: [currentField], defaults: { features: [] } }
       controller.draft = ({ features: ["a"] })
-      waitForPolish(fieldUnderTest)
+      waitForItemPolished(fieldUnderTest)
       var choice = findChild(fieldUnderTest, "settings-field-multiselect-b")
       verify(choice !== null)
 
