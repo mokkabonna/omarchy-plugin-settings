@@ -46,6 +46,15 @@ omarchy plugin enable mokkabonna.plugin-settings --section right
 Omarchy plugins run as unsandboxed code inside the shell. Review a plugin's
 source before enabling it.
 
+## Removal
+
+Disable and remove the plugin with:
+
+```bash
+omarchy plugin disable mokkabonna.plugin-settings
+omarchy plugin remove mokkabonna.plugin-settings
+```
+
 ## Development
 
 For a local checkout, link it into the user plugin directory, rescan, and
