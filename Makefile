@@ -1,6 +1,6 @@
 .PHONY: check test integration lint manifest whitespace act local install reload release
 
-QML_FILES := Panel.qml BarWidget.qml SettingsController.qml SettingsField.qml ShortcutOverlay.qml
+QML_FILES := Panel.qml BarWidget.qml SettingsController.qml SettingsField.qml
 QMLLINT ?= qmllint
 QMLLINT_ARGS ?=
 QMLLINT_IMPORT_PATH ?= tests/qml-stubs

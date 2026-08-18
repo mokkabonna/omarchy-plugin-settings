@@ -20,17 +20,8 @@ Item {
   property alias selectedDefinition: settingsController.selectedDefinition
   property alias draft: settingsController.draft
   property alias status: settingsController.status
-  property bool shortcutsVisible: false
 
   readonly property bool resetConfirmationVisible: resetConfirmation.opened
-
-  readonly property var shortcutItems: [
-    { keys: "↑ / k · ↓ / j", action: "Previous / next item" },
-    { keys: "Home / End", action: "First / last item" },
-    { keys: "Page Up / Down", action: "Scroll the settings form" },
-    { keys: "Esc / Ctrl+W", action: "Close" },
-    { keys: "?", action: "Show or hide this reference" }
-  ]
 
   readonly property var selectedMetadata: settingsController.selectedMetadata
   readonly property var schema: settingsController.schema
@@ -122,7 +113,6 @@ Item {
 
   function open(payloadJson) {
     opened = true
-    shortcutsVisible = false
     window.visible = true
     var entries = configurableEntries()
     if ((!selectedId || !selectedKind) && entries.length > 0) selectWidget(entries[0])
@@ -130,7 +120,6 @@ Item {
 
   function close() {
     closingFromHost = true
-    shortcutsVisible = false
     opened = false
     window.visible = false
     closingFromHost = false
@@ -172,17 +161,6 @@ Item {
     if (settingsController.status === "Saved to shell.json") settingsController.status = ""
   }
 
-  function toggleShortcuts() {
-    shortcutsVisible = !shortcutsVisible
-    shortcutsFocusTimer.restart()
-  }
-
-  function hideShortcuts() {
-    if (!shortcutsVisible) return
-    shortcutsVisible = false
-    shortcutsFocusTimer.restart()
-  }
-
   function focusFirstFormControl() {
     for (var i = 0; i < fieldsRepeater.count; i++) {
       var fieldItem = fieldsRepeater.itemAt(i)
@@ -191,14 +169,17 @@ Item {
     return false
   }
 
-  Timer {
-    id: shortcutsFocusTimer
-    interval: 0
-    repeat: false
-    onTriggered: {
-      if (root.shortcutsVisible) shortcutOverlay.forceCloseFocus()
-      else helpButton.forceActiveFocus()
+  function currentKeyboardHint() {
+    if (widgetList.activeFocus) return "j/k Navigate · Tab Edit · Home/End Jump · Esc Close"
+    for (var i = 0; i < fieldsRepeater.count; i++) {
+      var fieldItem = fieldsRepeater.itemAt(i)
+      if (fieldItem) {
+        var hint = fieldItem.keyboardHint()
+        if (hint !== "") return hint
+      }
     }
+    if (resetButton.activeFocus) return "Enter Reset · Tab List · Esc Close"
+    return "Tab Focus · Esc Close"
   }
 
   Timer {
@@ -242,11 +223,7 @@ Item {
         if (root.handleResetKey(event)) {
           event.accepted = true
         } else if (event.key === Qt.Key_Escape) {
-          if (root.shortcutsVisible) root.hideShortcuts()
-          else root.requestClose()
-          event.accepted = true
-        } else if (event.text === "?") {
-          root.toggleShortcuts()
+          root.requestClose()
           event.accepted = true
         } else if (event.key === Qt.Key_W && (event.modifiers & Qt.ControlModifier)) {
           root.requestClose()
@@ -266,8 +243,6 @@ Item {
         anchors.fill: parent
         anchors.margins: Style.space(18)
         spacing: Style.space(14)
-        enabled: !root.shortcutsVisible
-
         Rectangle {
           Layout.preferredWidth: 245
           Layout.fillHeight: true
@@ -348,7 +323,7 @@ Item {
               }
               Keys.onPressed: function(event) {
                 if (event.key === Qt.Key_Tab) {
-                  if (event.modifiers & Qt.ShiftModifier) helpButton.forceActiveFocus()
+                  if (event.modifiers & Qt.ShiftModifier) resetButton.forceActiveFocus()
                   else root.focusFirstFormControl()
                   event.accepted = true
                   return
@@ -383,21 +358,6 @@ Item {
               font.pixelSize: Style.font.heading
               font.bold: true
               elide: Text.ElideRight
-            }
-            Button {
-              id: helpButton
-              Layout.preferredWidth: Style.space(36)
-              Layout.preferredHeight: Style.space(36)
-              text: "?"
-              tooltipText: "Keyboard shortcuts"
-              fontSize: Style.font.body
-              foreground: Color.foreground
-              accent: Color.accent
-              bordered: true
-              focusable: true
-              onClicked: root.toggleShortcuts()
-              KeyNavigation.backtab: resetButton
-              KeyNavigation.tab: widgetList
             }
           }
           Text {
@@ -443,12 +403,23 @@ Item {
           RowLayout {
             Layout.fillWidth: true
             Text {
-              Layout.fillWidth: true
+              Layout.preferredWidth: Math.min(implicitWidth, Style.space(260))
               text: root.status
               color: Color.foreground
               opacity: 0.65
               font.family: Style.font.family
               font.pixelSize: Style.font.bodySmall
+              elide: Text.ElideRight
+            }
+            Text {
+              Layout.fillWidth: true
+              text: root.currentKeyboardHint()
+              color: Color.foreground
+              opacity: 0.6
+              font.family: Style.font.family
+              font.pixelSize: Style.font.bodySmall
+              horizontalAlignment: Text.AlignRight
+              elide: Text.ElideRight
             }
             Button {
               id: resetButton
@@ -459,18 +430,10 @@ Item {
               bordered: true
               focusable: true
               onClicked: root.requestReset()
-              KeyNavigation.tab: helpButton
+              KeyNavigation.tab: widgetList
             }
           }
         }
-      }
-
-      ShortcutOverlay {
-        id: shortcutOverlay
-        anchors.fill: parent
-        visible: root.shortcutsVisible
-        shortcutItems: root.shortcutItems
-        onCloseRequested: root.hideShortcuts()
       }
 
       ConfirmDialog {

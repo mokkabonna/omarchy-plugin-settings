@@ -276,7 +276,6 @@ TestCase {
 
     panel.close()
     verify(!panel.opened)
-    verify(!panel.shortcutsVisible)
   }
 
   function test_reset_requires_confirmation_and_accepts_keyboard_navigation() {

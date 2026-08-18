@@ -24,19 +24,6 @@ Item {
     controller: controller
   }
 
-  Plugin.ShortcutOverlay {
-    id: shortcutOverlay
-    anchors.fill: parent
-    visible: false
-    shortcutItems: [{ keys: "Esc", action: "Close" }]
-  }
-
-  SignalSpy {
-    id: closeSpy
-    target: shortcutOverlay
-    signalName: "closeRequested"
-  }
-
   TestCase {
     id: testCase
     name: "SettingsComponents"
@@ -52,8 +39,6 @@ Item {
       controller.selectedSection = "bar"
       controller.draft = ({ enabled: false })
       shellFixture.shellConfig = ({ bar: {} })
-      shortcutOverlay.visible = false
-      closeSpy.clear()
       waitForItemPolished(fieldUnderTest)
     }
 
@@ -145,15 +130,5 @@ Item {
       verify(firstChoice.activeFocus)
     }
 
-    function test_shortcut_overlay_close_accepts_mouse_and_keyboard() {
-      shortcutOverlay.visible = true
-      tryVerify(function() { return shortcutOverlay.closeControl.width > 0 })
-      mouseClick(shortcutOverlay.closeControl)
-      compare(closeSpy.count, 1)
-
-      shortcutOverlay.closeControl.forceActiveFocus()
-      keyClick(Qt.Key_Space)
-      compare(closeSpy.count, 2)
-    }
   }
 }

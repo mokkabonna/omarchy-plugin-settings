@@ -44,6 +44,24 @@ ColumnLayout {
     if (choice) choice.forceActiveFocus()
   }
 
+  function keyboardHint() {
+    if (valueInput.activeFocus) {
+      if (field.type === "integer" || field.type === "number")
+        return "Enter Save · ↑/↓ Adjust · Tab Next · Esc Close"
+      return "Enter Save · Tab Next · Esc Close"
+    }
+    if (booleanToggle.activeFocus || enumToggle.activeFocus)
+      return "Space Toggle · Tab Next · Esc Close"
+    if (enumOptions.activeFocus)
+      return "h/l Choose · Enter Apply · Tab Next · Esc Close"
+    for (var i = 0; i < multiselectRepeater.count; i++) {
+      var choice = multiselectRepeater.itemAt(i)
+      if (choice && choice.activeFocus)
+        return "h/l Move · Space Toggle · Tab Next · Esc Close"
+    }
+    return ""
+  }
+
   function setAndSave(key, value) {
     controller.setValue(key, value)
     controller.save()

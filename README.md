@@ -29,7 +29,7 @@ supported plugin instances can be configured.
   activate the focused control.
 - `Up` / `Down` in a numeric field: adjust by its configured step (or 1).
 - `Page Up` / `Page Down`: scroll the settings form.
-- `?`: show or hide the in-window keyboard shortcut reference.
+- Keyboard hints are shown in the window footer and adapt to the focused control.
 
 ## Install
 
@@ -110,8 +110,7 @@ make integration
 
 The QML implementation is split by responsibility: `Panel.qml` owns the shell
 window and focus flow, `SettingsController.qml` owns discovery and persistence,
-`SettingsField.qml` renders schema fields, and `ShortcutOverlay.qml` renders
-the shortcut reference.
+and `SettingsField.qml` renders schema fields.
 
 To run the GitHub Actions check workflow locally, install
 [nektos/act](https://nektosact.com/installation/) and ensure Docker is
