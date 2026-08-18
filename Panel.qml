@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import qs.Commons
+import qs.Ui
 
 Item {
   id: root
@@ -21,6 +22,10 @@ Item {
   property alias savedDraft: settingsController.savedDraft
   property alias status: settingsController.status
   property bool shortcutsVisible: false
+  property string pendingDiscardAction: ""
+  property var pendingSelection: null
+
+  readonly property bool discardConfirmationVisible: discardConfirmation.opened
 
   readonly property var shortcutItems: [
     { keys: "↑ / ↓", action: "Previous / next item" },
@@ -69,6 +74,16 @@ Item {
   }
 
   function selectWidget(instance) {
+    if (!instance) return
+    var alreadySelected = instance.id === selectedId && instance.kind === selectedKind
+      && instance.section === selectedSection && instance.index === selectedIndex
+    if (alreadySelected) return
+    if (dirty) {
+      pendingDiscardAction = "select"
+      pendingSelection = instance
+      discardConfirmation.opened = true
+      return
+    }
     settingsController.selectWidget(instance)
   }
 
@@ -144,8 +159,32 @@ Item {
   }
 
   function requestClose() {
+    if (dirty) {
+      pendingDiscardAction = "close"
+      pendingSelection = null
+      discardConfirmation.opened = true
+      return
+    }
+    closeWithoutConfirmation()
+  }
+
+  function closeWithoutConfirmation() {
     if (shell && typeof shell.hide === "function") shell.hide((manifest && manifest.id) || "mokkabonna.plugin-settings")
     else close()
+  }
+
+  function cancelDiscard() {
+    pendingDiscardAction = ""
+    pendingSelection = null
+    discardConfirmation.opened = false
+  }
+
+  function confirmDiscard() {
+    var action = pendingDiscardAction
+    var selection = pendingSelection
+    cancelDiscard()
+    if (action === "select" && selection) settingsController.selectWidget(selection)
+    else if (action === "close") closeWithoutConfirmation()
   }
 
   function toggleShortcuts() {
@@ -547,6 +586,18 @@ Item {
         visible: root.shortcutsVisible
         shortcutItems: root.shortcutItems
         onCloseRequested: root.hideShortcuts()
+      }
+
+      ConfirmDialog {
+        id: discardConfirmation
+        anchors.fill: parent
+        message: pendingDiscardAction === "select"
+          ? "Discard unsaved changes and select another item?"
+          : "Discard unsaved changes and close Plugin Settings?"
+        cancelText: "Keep editing"
+        confirmText: "Discard"
+        onCanceled: root.cancelDiscard()
+        onConfirmed: root.confirmDiscard()
       }
     }
   }

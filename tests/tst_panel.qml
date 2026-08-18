@@ -104,6 +104,7 @@ TestCase {
     panel.draft = ({})
     panel.savedDraft = ({})
     panel.status = ""
+    panel.cancelDiscard()
     panel.manifest = { id: "test.plugin-settings" }
     shellFixture.hideCalls = 0
     shellFixture.hiddenId = ""
@@ -274,5 +275,40 @@ TestCase {
     panel.close()
     verify(!panel.opened)
     verify(!panel.shortcutsVisible)
+  }
+
+  function test_dirty_close_requires_confirmation() {
+    panel.selectWidget(entryWith("omarchy.shell.bar", "shell"))
+    panel.setValue("transparent", true)
+
+    panel.requestClose()
+    verify(panel.discardConfirmationVisible)
+    compare(shellFixture.hideCalls, 0)
+
+    panel.cancelDiscard()
+    verify(!panel.discardConfirmationVisible)
+    compare(shellFixture.hideCalls, 0)
+
+    panel.requestClose()
+    panel.confirmDiscard()
+    verify(!panel.discardConfirmationVisible)
+    compare(shellFixture.hideCalls, 1)
+  }
+
+  function test_dirty_selection_requires_confirmation() {
+    panel.selectWidget(entryWith("omarchy.shell.bar", "shell"))
+    panel.setValue("transparent", true)
+
+    panel.selectWidget(entryWith("omarchy.shell.idle", "shell"))
+    verify(panel.discardConfirmationVisible)
+    compare(panel.selectedId, "omarchy.shell.bar")
+
+    panel.cancelDiscard()
+    compare(panel.selectedId, "omarchy.shell.bar")
+
+    panel.selectWidget(entryWith("omarchy.shell.idle", "shell"))
+    panel.confirmDiscard()
+    compare(panel.selectedId, "omarchy.shell.idle")
+    verify(!panel.dirty)
   }
 }
