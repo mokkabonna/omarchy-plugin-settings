@@ -19,25 +19,20 @@ Item {
   property alias selectedIndex: settingsController.selectedIndex
   property alias selectedDefinition: settingsController.selectedDefinition
   property alias draft: settingsController.draft
-  property alias savedDraft: settingsController.savedDraft
   property alias status: settingsController.status
   property bool shortcutsVisible: false
-  property string pendingDiscardAction: ""
-  property var pendingSelection: null
-  property Item focusBeforeDiscard: null
+  property Item focusBeforeReset: null
 
-  readonly property bool discardConfirmationVisible: discardConfirmation.opened
+  readonly property bool resetConfirmationVisible: resetConfirmation.opened
 
   readonly property var shortcutItems: [
     { keys: "↑ / k · ↓ / j", action: "Previous / next item" },
     { keys: "Home / End", action: "First / last item" },
     { keys: "Page Up / Down", action: "Scroll the settings form" },
-    { keys: "Ctrl+S", action: "Save pending changes" },
     { keys: "Esc / Ctrl+W", action: "Close" },
     { keys: "?", action: "Show or hide this reference" }
   ]
 
-  readonly property bool dirty: settingsController.dirty
   readonly property var selectedMetadata: settingsController.selectedMetadata
   readonly property var schema: settingsController.schema
 
@@ -74,15 +69,6 @@ Item {
     var alreadySelected = instance.id === selectedId && instance.kind === selectedKind
       && instance.section === selectedSection && instance.index === selectedIndex
     if (alreadySelected) return
-    if (dirty) {
-      focusBeforeDiscard = window.activeFocusItem
-      pendingDiscardAction = "select"
-      pendingSelection = instance
-      discardConfirmation.selectedIndex = 1
-      discardConfirmation.opened = true
-      windowContent.forceActiveFocus()
-      return
-    }
     settingsController.selectWidget(instance)
   }
 
@@ -128,6 +114,7 @@ Item {
 
   function resetToDefaults() {
     settingsController.resetToDefaults()
+    settingsController.save()
   }
 
   function save() {
@@ -151,16 +138,8 @@ Item {
   }
 
   function requestClose() {
-    if (dirty) {
-      focusBeforeDiscard = window.activeFocusItem
-      pendingDiscardAction = "close"
-      pendingSelection = null
-      discardConfirmation.selectedIndex = 1
-      discardConfirmation.opened = true
-      windowContent.forceActiveFocus()
-      return
-    }
-    closeWithoutConfirmation()
+    windowContent.forceActiveFocus()
+    Qt.callLater(root.closeWithoutConfirmation)
   }
 
   function closeWithoutConfirmation() {
@@ -168,27 +147,29 @@ Item {
     else close()
   }
 
-  function cancelDiscard() {
-    var previousFocus = focusBeforeDiscard
-    pendingDiscardAction = ""
-    pendingSelection = null
-    focusBeforeDiscard = null
-    discardConfirmation.opened = false
+  function requestReset() {
+    focusBeforeReset = window.activeFocusItem
+    resetConfirmation.selectedIndex = 1
+    resetConfirmation.opened = true
+    windowContent.forceActiveFocus()
+  }
+
+  function cancelReset() {
+    var previousFocus = focusBeforeReset
+    focusBeforeReset = null
+    resetConfirmation.opened = false
     if (previousFocus && typeof previousFocus.forceActiveFocus === "function")
       previousFocus.forceActiveFocus()
   }
 
-  function confirmDiscard() {
-    var action = pendingDiscardAction
-    var selection = pendingSelection
-    cancelDiscard()
-    if (action === "select" && selection) settingsController.selectWidget(selection)
-    else if (action === "close") closeWithoutConfirmation()
+  function confirmReset() {
+    cancelReset()
+    resetToDefaults()
   }
 
-  function handleDiscardKey(event) {
-    if (!discardConfirmation.opened) return false
-    return discardConfirmation.handleKey(event)
+  function handleResetKey(event) {
+    if (!resetConfirmation.opened) return false
+    return resetConfirmation.handleKey(event)
   }
 
   function toggleShortcuts() {
@@ -243,7 +224,7 @@ Item {
       focus: true
       Keys.priority: Keys.AfterItem
       Keys.onPressed: function(event) {
-        if (root.handleDiscardKey(event)) {
+        if (root.handleResetKey(event)) {
           event.accepted = true
         } else if (event.key === Qt.Key_Escape) {
           if (root.shortcutsVisible) root.hideShortcuts()
@@ -251,9 +232,6 @@ Item {
           event.accepted = true
         } else if (event.text === "?") {
           root.toggleShortcuts()
-          event.accepted = true
-        } else if (event.key === Qt.Key_S && (event.modifiers & Qt.ControlModifier)) {
-          root.save()
           event.accepted = true
         } else if (event.key === Qt.Key_W && (event.modifiers & Qt.ControlModifier)) {
           root.requestClose()
@@ -403,7 +381,7 @@ Item {
               bordered: true
               focusable: true
               onClicked: root.toggleShortcuts()
-              KeyNavigation.backtab: saveButton
+              KeyNavigation.backtab: resetButton
               KeyNavigation.tab: widgetList
             }
           }
@@ -451,7 +429,7 @@ Item {
             Layout.fillWidth: true
             Text {
               Layout.fillWidth: true
-              text: root.status !== "" ? root.status : (root.dirty ? "Unsaved changes" : "")
+              text: root.status
               color: Color.foreground
               opacity: 0.65
               font.family: Style.font.family
@@ -465,19 +443,7 @@ Item {
               accent: Color.accent
               bordered: true
               focusable: true
-              onClicked: root.resetToDefaults()
-            }
-            Button {
-              id: saveButton
-              Layout.preferredHeight: Style.space(38)
-              text: "Save"
-              foreground: Color.foreground
-              accent: Color.accent
-              active: root.dirty
-              bordered: true
-              focusable: true
-              enabled: root.dirty
-              onClicked: root.save()
+              onClicked: root.requestReset()
               KeyNavigation.tab: helpButton
             }
           }
@@ -493,15 +459,14 @@ Item {
       }
 
       ConfirmDialog {
-        id: discardConfirmation
+        id: resetConfirmation
         anchors.fill: parent
-        message: pendingDiscardAction === "select"
-          ? "Discard unsaved changes and select another item?"
-          : "Discard unsaved changes and close Plugin Settings?"
-        cancelText: "Keep editing"
-        confirmText: "Discard"
-        onCanceled: root.cancelDiscard()
-        onConfirmed: root.confirmDiscard()
+        message: "Reset " + (root.selectedMetadata && root.selectedMetadata.displayName
+          ? root.selectedMetadata.displayName : "this item") + " to its defaults?"
+        cancelText: "Cancel"
+        confirmText: "Reset"
+        onCanceled: root.cancelReset()
+        onConfirmed: root.confirmReset()
       }
     }
   }

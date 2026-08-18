@@ -12,10 +12,8 @@ QtObject {
   property int selectedIndex: -1
   property var selectedDefinition: null
   property var draft: ({})
-  property var savedDraft: ({})
   property string status: ""
 
-  readonly property bool dirty: JSON.stringify(draft) !== JSON.stringify(savedDraft)
   readonly property var selectedMetadata: selectedDefinition
   readonly property var schema: selectedMetadata && selectedMetadata.schema
     ? selectedMetadata.schema : []
@@ -145,7 +143,6 @@ QtObject {
     var next = ({})
     for (var key in instance.entry) if (key !== "id") next[key] = instance.entry[key]
     draft = next
-    savedDraft = JSON.parse(JSON.stringify(next))
   }
 
   function setValue(key, value) {
@@ -204,8 +201,8 @@ QtObject {
     }
     draft = next
     status = selectedKind === "shell"
-      ? "Reset to Omarchy defaults — save to apply"
-      : "Reset to manifest defaults — save to apply"
+      ? "Reset to Omarchy defaults"
+      : "Reset to manifest defaults"
   }
 
   function save() {
@@ -265,12 +262,11 @@ QtObject {
       }
     })
     if (!saved) {
-      status = "This item moved or is no longer enabled; select it again before saving"
+      status = "This item moved or is no longer enabled; select it again"
       return
     }
     selectedIndex = persistedIndex
     draft = values
-    savedDraft = JSON.parse(JSON.stringify(values))
     status = "Saved to shell.json"
   }
 }

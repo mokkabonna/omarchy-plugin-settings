@@ -16,13 +16,13 @@ supported plugin instances can be configured.
   `multiselect` fields.
 - Enforces numeric `min`, `max`, and `step` constraints.
 - Uses switches for booleans and two-option `Off` / `On` enums.
-- Provides Reset-to-defaults, dirty-state feedback, and a Save action.
+- Saves choices immediately and text or numeric values when editing finishes.
+- Provides a confirmed Reset-to-defaults action.
 
 ## Interactions
 
 - Bar gear: toggle the settings window.
 - `Escape`: close the window.
-- `Ctrl+S`: save pending changes.
 - `Ctrl+W`: close the window.
 - `Up` / `k` and `Down` / `j`, plus `Home` / `End`: navigate the focused item list.
 - `Tab` / `Shift+Tab`: move between interactive controls; `Enter` or `Space`:

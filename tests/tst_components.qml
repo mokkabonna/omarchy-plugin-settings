@@ -6,8 +6,15 @@ Item {
   width: 640
   height: 480
 
+  QtObject {
+    id: shellFixture
+    property var shellConfig: ({ bar: {} })
+    function mutateShellConfig(callback) { callback(shellConfig) }
+  }
+
   Plugin.SettingsController {
     id: controller
+    shell: shellFixture
   }
 
   Plugin.SettingsField {
@@ -40,8 +47,11 @@ Item {
     function init() {
       currentField = ({ key: "enabled", type: "boolean", label: "Enabled" })
       controller.selectedDefinition = { schema: [currentField], defaults: { enabled: false } }
+      controller.selectedId = "omarchy.shell.bar"
+      controller.selectedKind = "shell"
+      controller.selectedSection = "bar"
       controller.draft = ({ enabled: false })
-      controller.savedDraft = ({ enabled: false })
+      shellFixture.shellConfig = ({ bar: {} })
       shortcutOverlay.visible = false
       closeSpy.clear()
       waitForItemPolished(fieldUnderTest)
@@ -51,10 +61,12 @@ Item {
       tryVerify(function() { return fieldUnderTest.booleanToggleControl.width > 0 })
       mouseClick(fieldUnderTest.booleanToggleControl)
       compare(controller.draft.enabled, true)
+      compare(shellFixture.shellConfig.bar.enabled, true)
 
       fieldUnderTest.booleanToggleControl.forceActiveFocus()
       keyClick(Qt.Key_Space)
       compare(controller.draft.enabled, false)
+      compare(shellFixture.shellConfig.bar.enabled, false)
     }
 
     function test_on_off_enum_accepts_mouse_and_keyboard() {

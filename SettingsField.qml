@@ -44,6 +44,11 @@ ColumnLayout {
     if (choice) choice.forceActiveFocus()
   }
 
+  function setAndSave(key, value) {
+    controller.setValue(key, value)
+    controller.save()
+  }
+
   Text {
     visible: root.field.type !== "boolean" && !root.controller.isOnOffEnum(root.field)
     text: root.field.label || root.field.key
@@ -80,8 +85,8 @@ ColumnLayout {
       var value = text
       if (root.field.type === "integer" || root.field.type === "number")
         value = root.controller.normalizedNumber(root.field, text)
-      if (value === undefined) return
-      root.controller.setValue(root.field.key, value)
+      if (value !== undefined) root.controller.setValue(root.field.key, value)
+      root.controller.save()
     }
     Keys.onPressed: function(event) {
       if ((event.key !== Qt.Key_Up && event.key !== Qt.Key_Down)
@@ -92,7 +97,10 @@ ColumnLayout {
         ? Number(root.field.step) : 1
       var next = root.controller.normalizedNumber(root.field,
         current + (event.key === Qt.Key_Up ? step : -step))
-      if (next !== undefined) root.controller.setValue(root.field.key, next)
+      if (next !== undefined) {
+        root.controller.setValue(root.field.key, next)
+        root.controller.save()
+      }
       event.accepted = true
     }
   }
@@ -123,7 +131,7 @@ ColumnLayout {
     foreground: Color.foreground
     accent: Color.accent
     KeyNavigation.backtab: root.fieldIndex === 0 ? root.backtabTarget : null
-    onClicked: root.controller.setValue(root.field.key, !checked)
+    onClicked: root.setAndSave(root.field.key, !checked)
   }
 
   Toggle {
@@ -137,7 +145,7 @@ ColumnLayout {
     foreground: Color.foreground
     accent: Color.accent
     KeyNavigation.backtab: root.fieldIndex === 0 ? root.backtabTarget : null
-    onClicked: root.controller.setValue(root.field.key, checked ? "Off" : "On")
+    onClicked: root.setAndSave(root.field.key, checked ? "Off" : "On")
   }
 
   ButtonGroup {
@@ -153,7 +161,7 @@ ColumnLayout {
     accent: Color.accent
     fontFamily: Style.font.family
     fontSize: Style.font.bodySmall
-    onChanged: function(value) { root.controller.setValue(currentField.key, value) }
+    onChanged: function(value) { root.setAndSave(currentField.key, value) }
   }
 
   Flow {
@@ -177,7 +185,10 @@ ColumnLayout {
         bordered: true
         focusable: true
         KeyNavigation.backtab: root.fieldIndex === 0 && index === 0 ? root.backtabTarget : null
-        onClicked: root.controller.toggleMultiselect(root.field, value)
+        onClicked: {
+          root.controller.toggleMultiselect(root.field, value)
+          root.controller.save()
+        }
         Keys.onPressed: function(event) {
           if (event.key === Qt.Key_Left || event.text === "h") {
             root.focusMultiselectChoice(index - 1)

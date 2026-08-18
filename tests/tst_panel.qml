@@ -102,9 +102,8 @@ TestCase {
     panel.selectedIndex = -1
     panel.selectedDefinition = null
     panel.draft = ({})
-    panel.savedDraft = ({})
     panel.status = ""
-    panel.cancelDiscard()
+    panel.cancelReset()
     panel.manifest = { id: "test.plugin-settings" }
     shellFixture.hideCalls = 0
     shellFixture.hiddenId = ""
@@ -136,12 +135,13 @@ TestCase {
     compare(panel.valueFor({ key: "mode" }), "safe")
     panel.setValue("mode", "fast")
     panel.setValue("enabled", false)
-    verify(panel.dirty)
 
     panel.resetToDefaults()
     compare(panel.draft.enabled, true)
     compare(panel.draft.mode, "safe")
-    compare(panel.status, "Reset to manifest defaults — save to apply")
+    compare(shellFixture.shellConfig.plugins[0].enabled, true)
+    compare(shellFixture.shellConfig.plugins[0].mode, "safe")
+    compare(panel.status, "Saved to shell.json")
   }
 
   function test_numeric_normalization() {
@@ -175,7 +175,6 @@ TestCase {
     compare(shellFixture.shellConfig.plugins[0].enabled, true)
     compare(shellFixture.shellConfig.plugins.length, 1)
     compare(panel.status, "Saved to shell.json")
-    verify(!panel.dirty)
   }
 
   function test_save_updates_shell_bar_and_preserves_layout() {
@@ -234,7 +233,6 @@ TestCase {
 
     compare(shellFixture.shellConfig.idle.screensaver, 150)
     compare(panel.status, "Screensaver timeout must be a number")
-    verify(panel.dirty)
   }
 
   function test_save_adds_missing_plugin_instance() {
@@ -259,8 +257,7 @@ TestCase {
     panel.save()
 
     compare(shellFixture.shellConfig.bar.layout.right.length, 0)
-    compare(panel.status, "This item moved or is no longer enabled; select it again before saving")
-    verify(panel.dirty)
+    compare(panel.status, "This item moved or is no longer enabled; select it again")
   }
 
   function test_panel_open_close_and_host_close_request() {
@@ -269,7 +266,7 @@ TestCase {
     compare(panel.selectedId, "omarchy.shell.bar")
 
     panel.requestClose()
-    compare(shellFixture.hideCalls, 1)
+    tryCompare(shellFixture, "hideCalls", 1)
     compare(shellFixture.hiddenId, "test.plugin-settings")
 
     panel.close()
@@ -277,53 +274,22 @@ TestCase {
     verify(!panel.shortcutsVisible)
   }
 
-  function test_dirty_close_requires_confirmation() {
+  function test_reset_requires_confirmation_and_accepts_keyboard_navigation() {
     panel.selectWidget(entryWith("omarchy.shell.bar", "shell"))
     panel.setValue("transparent", true)
+    panel.save()
 
-    panel.requestClose()
-    verify(panel.discardConfirmationVisible)
-    compare(shellFixture.hideCalls, 0)
+    panel.requestReset()
+    verify(panel.resetConfirmationVisible)
+    verify(panel.handleResetKey({ key: Qt.Key_Left }))
+    verify(panel.handleResetKey({ key: Qt.Key_Return }))
+    verify(!panel.resetConfirmationVisible)
+    compare(shellFixture.shellConfig.bar.transparent, true)
 
-    panel.cancelDiscard()
-    verify(!panel.discardConfirmationVisible)
-    compare(shellFixture.hideCalls, 0)
-
-    panel.requestClose()
-    panel.confirmDiscard()
-    verify(!panel.discardConfirmationVisible)
-    compare(shellFixture.hideCalls, 1)
-  }
-
-  function test_dirty_selection_requires_confirmation() {
-    panel.selectWidget(entryWith("omarchy.shell.bar", "shell"))
-    panel.setValue("transparent", true)
-
-    panel.selectWidget(entryWith("omarchy.shell.idle", "shell"))
-    verify(panel.discardConfirmationVisible)
-    compare(panel.selectedId, "omarchy.shell.bar")
-
-    panel.cancelDiscard()
-    compare(panel.selectedId, "omarchy.shell.bar")
-
-    panel.selectWidget(entryWith("omarchy.shell.idle", "shell"))
-    panel.confirmDiscard()
-    compare(panel.selectedId, "omarchy.shell.idle")
-    verify(!panel.dirty)
-  }
-
-  function test_discard_confirmation_accepts_keyboard_navigation() {
-    panel.selectWidget(entryWith("omarchy.shell.bar", "shell"))
-    panel.setValue("transparent", true)
-    panel.requestClose()
-
-    verify(panel.handleDiscardKey({ key: Qt.Key_Left }))
-    verify(panel.handleDiscardKey({ key: Qt.Key_Return }))
-    verify(!panel.discardConfirmationVisible)
-    compare(shellFixture.hideCalls, 0)
-
-    panel.requestClose()
-    verify(panel.handleDiscardKey({ key: Qt.Key_Return }))
-    compare(shellFixture.hideCalls, 1)
+    panel.requestReset()
+    verify(panel.handleResetKey({ key: Qt.Key_Return }))
+    verify(!panel.resetConfirmationVisible)
+    compare(shellFixture.shellConfig.bar.transparent, true)
+    compare(shellFixture.shellConfig.bar.position, "bottom")
   }
 }
