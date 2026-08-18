@@ -170,7 +170,7 @@ Item {
   }
 
   function currentKeyboardHint() {
-    if (widgetList.activeFocus) return "j/k Navigate · Tab Edit · Home/End Jump · Esc Close"
+    if (widgetList.activeFocus) return "j/k Navigate · Tab Edit · Home/End Jump · Ctrl+R Reset · Esc Close"
     for (var i = 0; i < fieldsRepeater.count; i++) {
       var fieldItem = fieldsRepeater.itemAt(i)
       if (fieldItem) {
@@ -178,8 +178,8 @@ Item {
         if (hint !== "") return hint
       }
     }
-    if (resetButton.activeFocus) return "Enter Reset · Tab List · Esc Close"
-    return "Tab Focus · Esc Close"
+    if (resetButton.activeFocus) return "Enter Reset · Tab List · Ctrl+R Reset · Esc Close"
+    return "Tab Focus · Ctrl+R Reset · Esc Close"
   }
 
   Timer {
@@ -224,6 +224,9 @@ Item {
           event.accepted = true
         } else if (event.key === Qt.Key_Escape) {
           root.requestClose()
+          event.accepted = true
+        } else if (event.key === Qt.Key_R && (event.modifiers & Qt.ControlModifier)) {
+          root.requestReset()
           event.accepted = true
         } else if (event.key === Qt.Key_W && (event.modifiers & Qt.ControlModifier)) {
           root.requestClose()

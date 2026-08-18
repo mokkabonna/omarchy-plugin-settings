@@ -23,6 +23,7 @@ supported plugin instances can be configured.
 
 - Bar gear: toggle the settings window.
 - `Escape`: close the window.
+- `Ctrl+R`: reset the selected item after confirmation.
 - `Ctrl+W`: close the window.
 - `Up` / `k` and `Down` / `j`, plus `Home` / `End`: navigate the focused item list.
 - `Tab` / `Shift+Tab`: move between interactive controls; `Enter` or `Space`:

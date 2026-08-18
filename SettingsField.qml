@@ -65,15 +65,15 @@ ColumnLayout {
   function keyboardHint() {
     if (valueInput.activeFocus) {
       if (field.type === "integer" || field.type === "number")
-        return "Enter Save · ↑/↓ Adjust · Tab Next · Esc Close"
-      return "Enter Save · Tab Next · Esc Close"
+        return "Enter Save · ↑/↓ Adjust · Tab Next · Ctrl+R Reset · Esc Close"
+      return "Enter Save · Tab Next · Ctrl+R Reset · Esc Close"
     }
     if (booleanToggle.activeFocus || enumToggle.activeFocus)
-      return "Space Toggle · Tab Next · Esc Close"
+      return "Space Toggle · Tab Next · Ctrl+R Reset · Esc Close"
     if (enumOptions.activeFocus)
-      return "h/l Choose · Enter Apply · Tab Next · Esc Close"
+      return "h/l Choose · Enter Apply · Tab Next · Ctrl+R Reset · Esc Close"
     if (multiselectChoices.activeFocus)
-      return "h/l Move · Space Toggle · Tab Next · Esc Close"
+      return "h/l Move · Space Toggle · Tab Next · Ctrl+R Reset · Esc Close"
     return ""
   }
 
