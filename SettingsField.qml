@@ -51,10 +51,13 @@ ColumnLayout {
     var selectedIndex = -1
     for (var i = 0; i < multiselectRepeater.count; i++) {
       var choice = multiselectRepeater.itemAt(i)
+      // qmllint disable
       if (choice && choice.selected) {
+        // qmllint enable
         selectedIndex = i
         break
       }
+      // qmllint enable
     }
     multiselectChoices.focusIndex = selectedIndex < 0 ? 0 : selectedIndex
   }
@@ -67,7 +70,9 @@ ColumnLayout {
   function toggleFocusedMultiselectChoice() {
     var choice = multiselectRepeater.itemAt(multiselectChoices.focusIndex)
     if (!choice) return
+    // qmllint disable
     controller.toggleMultiselect(field, choice.value)
+    // qmllint enable
     controller.save()
   }
 

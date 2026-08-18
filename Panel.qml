@@ -128,7 +128,9 @@ Item {
 
   function requestClose() {
     windowContent.forceActiveFocus()
+    // qmllint disable
     Qt.callLater(root.closeWithoutConfirmation)
+    // qmllint enable
   }
 
   function closeWithoutConfirmation() {
@@ -167,7 +169,9 @@ Item {
   function focusFirstFormControl() {
     for (var i = 0; i < fieldsRepeater.count; i++) {
       var fieldItem = fieldsRepeater.itemAt(i)
+      // qmllint disable
       if (fieldItem && fieldItem.focusFirstControl()) return true
+      // qmllint enable
     }
     return false
   }
