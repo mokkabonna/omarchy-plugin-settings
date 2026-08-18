@@ -23,10 +23,8 @@ supported plugin instances can be configured.
 - Bar gear: toggle the settings window.
 - `Escape`: close the window.
 - `Ctrl+S`: save pending changes.
-- `Ctrl+R`: reset the selected item to its defaults.
 - `Ctrl+W`: close the window.
 - `Up` / `k` and `Down` / `j`, plus `Home` / `End`: navigate the focused item list.
-- `Ctrl+1` through `Ctrl+9`: select the corresponding item in the list.
 - `Tab` / `Shift+Tab`: move between interactive controls; `Enter` or `Space`:
   activate the focused control.
 - `Up` / `Down` in a numeric field: adjust by its configured step (or 1).

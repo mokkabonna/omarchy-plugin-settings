@@ -30,13 +30,8 @@ Item {
   readonly property var shortcutItems: [
     { keys: "↑ / k · ↓ / j", action: "Previous / next item" },
     { keys: "Home / End", action: "First / last item" },
-    { keys: "Ctrl+1 … 9", action: "Select item by list position" },
-    { keys: "Tab / Shift+Tab", action: "Move keyboard focus" },
-    { keys: "Enter / Space", action: "Activate the focused control" },
-    { keys: "↑ / ↓ in number", action: "Adjust by the configured step" },
     { keys: "Page Up / Down", action: "Scroll the settings form" },
     { keys: "Ctrl+S", action: "Save pending changes" },
-    { keys: "Ctrl+R", action: "Reset to defaults" },
     { keys: "Esc / Ctrl+W", action: "Close" },
     { keys: "?", action: "Show or hide this reference" }
   ]
@@ -101,13 +96,6 @@ Item {
     var next = current < 0 ? 0 : Math.max(0, Math.min(widgets.length - 1, current + offset))
     selectWidget(widgets[next])
     widgetList.positionViewAtIndex(next, ListView.Contain)
-  }
-
-  function selectWidgetAt(listIndex) {
-    var widgets = configurableEntries()
-    if (listIndex < 0 || listIndex >= widgets.length) return
-    selectWidget(widgets[listIndex])
-    widgetList.positionViewAtIndex(listIndex, ListView.Contain)
   }
 
   function setValue(key, value) {
@@ -221,7 +209,7 @@ Item {
     repeat: false
     onTriggered: {
       if (root.shortcutsVisible) shortcutOverlay.forceCloseFocus()
-      else shortcutsButton.forceActiveFocus()
+      else helpButton.forceActiveFocus()
     }
   }
 
@@ -257,9 +245,6 @@ Item {
         } else if (event.key === Qt.Key_S && (event.modifiers & Qt.ControlModifier)) {
           root.save()
           event.accepted = true
-        } else if (event.key === Qt.Key_R && (event.modifiers & Qt.ControlModifier)) {
-          root.resetToDefaults()
-          event.accepted = true
         } else if (event.key === Qt.Key_W && (event.modifiers & Qt.ControlModifier)) {
           root.requestClose()
           event.accepted = true
@@ -269,13 +254,6 @@ Item {
         } else if (event.key === Qt.Key_PageDown && event.modifiers === Qt.NoModifier) {
           formFlickable.contentY = Math.min(formFlickable.contentHeight - formFlickable.height,
             formFlickable.contentY + formFlickable.height * 0.8)
-          event.accepted = true
-        } else if (event.modifiers & Qt.ControlModifier) {
-          var numberKeys = [Qt.Key_1, Qt.Key_2, Qt.Key_3, Qt.Key_4, Qt.Key_5,
-            Qt.Key_6, Qt.Key_7, Qt.Key_8, Qt.Key_9]
-          var listIndex = numberKeys.indexOf(event.key)
-          if (listIndex < 0) return
-          root.selectWidgetAt(listIndex)
           event.accepted = true
         }
       }
@@ -367,7 +345,7 @@ Item {
               }
               Keys.onPressed: function(event) {
                 if (event.key === Qt.Key_Tab) {
-                  if (event.modifiers & Qt.ShiftModifier) shortcutsButton.forceActiveFocus()
+                  if (event.modifiers & Qt.ShiftModifier) helpButton.forceActiveFocus()
                   else root.focusFirstFormControl()
                   event.accepted = true
                   return
@@ -404,10 +382,12 @@ Item {
               elide: Text.ElideRight
             }
             Button {
-              id: shortcutsButton
+              id: helpButton
+              Layout.preferredWidth: Style.space(36)
               Layout.preferredHeight: Style.space(36)
-              text: "Shortcuts"
-              fontSize: Style.font.bodySmall
+              text: "?"
+              tooltipText: "Keyboard shortcuts"
+              fontSize: Style.font.body
               foreground: Color.foreground
               accent: Color.accent
               bordered: true
@@ -487,7 +467,7 @@ Item {
               focusable: true
               enabled: root.dirty
               onClicked: root.save()
-              KeyNavigation.tab: shortcutsButton
+              KeyNavigation.tab: helpButton
             }
           }
         }

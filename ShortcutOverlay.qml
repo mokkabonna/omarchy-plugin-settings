@@ -1,25 +1,31 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.Commons
+import qs.Ui
 
 Item {
   id: root
 
   property var shortcutItems: []
-  property alias closeControl: closeMouse
+  property alias closeControl: doneButton
   signal closeRequested()
 
   objectName: "shortcut-overlay"
   z: 100
 
   function forceCloseFocus() {
-    closeMouse.forceActiveFocus()
+    doneButton.forceActiveFocus()
   }
 
   Rectangle {
     anchors.fill: parent
     color: Color.menu.background
     opacity: 0.92
+  }
+
+  MouseArea {
+    anchors.fill: parent
+    onClicked: root.closeRequested()
   }
 
   Rectangle {
@@ -30,6 +36,8 @@ Item {
     color: Color.menu.background
     border.color: Color.menu.border
     border.width: 1
+
+    MouseArea { anchors.fill: parent; onClicked: {} }
 
     ColumnLayout {
       id: shortcutsLayout
@@ -48,34 +56,16 @@ Item {
           font.pixelSize: Style.font.heading
           font.bold: true
         }
-        Rectangle {
-          Layout.preferredWidth: Style.space(34)
+        Button {
+          id: doneButton
           Layout.preferredHeight: Style.space(34)
-          radius: Style.cornerRadius / 2
-          color: closeMouse.containsMouse ? Color.menu.selectedBackground : "transparent"
-          border.color: closeMouse.activeFocus ? Color.accent : Color.menu.border
-          border.width: closeMouse.activeFocus ? 2 : 1
-          Text {
-            anchors.centerIn: parent
-            text: "×"
-            color: Color.foreground
-            font.family: Style.font.family
-            font.pixelSize: Style.font.heading
-          }
-          MouseArea {
-            id: closeMouse
-            objectName: "shortcut-overlay-close"
-            anchors.fill: parent
-            activeFocusOnTab: true
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: root.closeRequested()
-            Keys.onPressed: function(event) {
-              if (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Space) return
-              root.closeRequested()
-              event.accepted = true
-            }
-          }
+          objectName: "shortcut-overlay-close"
+          text: "Done"
+          foreground: Color.foreground
+          accent: Color.accent
+          bordered: true
+          focusable: true
+          onClicked: root.closeRequested()
         }
       }
 

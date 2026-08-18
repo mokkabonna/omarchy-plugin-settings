@@ -3,6 +3,7 @@ import QtQuick
 Item {
   property string text: ""
   property string iconText: ""
+  property string tooltipText: ""
   property real fontSize: 14
   property color foreground: "white"
   property color accent: "steelblue"
