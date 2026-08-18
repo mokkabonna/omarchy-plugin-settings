@@ -125,7 +125,7 @@ TestCase {
     compare(entries[2].id, "example.widget")
     compare(entries[3].id, "example.plugin")
     compare(entries[4].id, "defaults.plugin")
-    compare(entries[2].locationLabel, "right bar · position 1")
+    compare(entries[2].locationLabel, "right bar")
     compare(entries[3].locationLabel, "Plugin instance 1")
     compare(entries[4].locationLabel, "Plugin defaults")
   }
