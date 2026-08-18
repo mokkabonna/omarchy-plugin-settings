@@ -119,15 +119,16 @@ Item {
       verify(secondChoice !== null)
 
       verify(fieldUnderTest.focusFirstControl())
-      verify(firstChoice.activeFocus)
+      verify(fieldUnderTest.multiselectControl.activeFocus)
+      verify(firstChoice.hasCursor)
       keyClick(Qt.Key_Right)
-      verify(secondChoice.activeFocus)
+      verify(secondChoice.hasCursor)
       keyClick(Qt.Key_Left)
-      verify(firstChoice.activeFocus)
+      verify(firstChoice.hasCursor)
       keyClick(Qt.Key_L)
-      verify(secondChoice.activeFocus)
+      verify(secondChoice.hasCursor)
       keyClick(Qt.Key_H)
-      verify(firstChoice.activeFocus)
+      verify(firstChoice.hasCursor)
     }
 
   }

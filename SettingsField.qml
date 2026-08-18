@@ -14,6 +14,7 @@ ColumnLayout {
   property alias booleanToggleControl: booleanToggle
   property alias enumToggleControl: enumToggle
   property alias enumOptionsControl: enumOptions
+  property alias multiselectControl: multiselectChoices
 
   objectName: "settings-field-" + (field.key || "")
   Layout.fillWidth: true
@@ -24,8 +25,7 @@ ColumnLayout {
     if (field.type === "boolean") return booleanToggle
     if (controller.isOnOffEnum(field)) return enumToggle
     if (field.type === "enum") return enumOptions
-    if (field.type === "multiselect" && multiselectRepeater.count > 0)
-      return multiselectRepeater.itemAt(0)
+    if (field.type === "multiselect" && multiselectRepeater.count > 0) return multiselectChoices
     return null
   }
 
@@ -33,15 +33,33 @@ ColumnLayout {
     var control = firstFocusControl()
     if (!control || !control.visible || !control.enabled
         || typeof control.forceActiveFocus !== "function") return false
+    if (control === multiselectChoices) resetMultiselectFocus()
     control.forceActiveFocus()
     return true
   }
 
+  function resetMultiselectFocus() {
+    var selectedIndex = -1
+    for (var i = 0; i < multiselectRepeater.count; i++) {
+      var choice = multiselectRepeater.itemAt(i)
+      if (choice && choice.selected) {
+        selectedIndex = i
+        break
+      }
+    }
+    multiselectChoices.focusIndex = selectedIndex < 0 ? 0 : selectedIndex
+  }
+
   function focusMultiselectChoice(index) {
     if (multiselectRepeater.count === 0) return
-    var next = Math.max(0, Math.min(multiselectRepeater.count - 1, index))
-    var choice = multiselectRepeater.itemAt(next)
-    if (choice) choice.forceActiveFocus()
+    multiselectChoices.focusIndex = Math.max(0, Math.min(multiselectRepeater.count - 1, index))
+  }
+
+  function toggleFocusedMultiselectChoice() {
+    var choice = multiselectRepeater.itemAt(multiselectChoices.focusIndex)
+    if (!choice) return
+    controller.toggleMultiselect(field, choice.value)
+    controller.save()
   }
 
   function keyboardHint() {
@@ -54,11 +72,8 @@ ColumnLayout {
       return "Space Toggle · Tab Next · Esc Close"
     if (enumOptions.activeFocus)
       return "h/l Choose · Enter Apply · Tab Next · Esc Close"
-    for (var i = 0; i < multiselectRepeater.count; i++) {
-      var choice = multiselectRepeater.itemAt(i)
-      if (choice && choice.activeFocus)
-        return "h/l Move · Space Toggle · Tab Next · Esc Close"
-    }
+    if (multiselectChoices.activeFocus)
+      return "h/l Move · Space Toggle · Tab Next · Esc Close"
     return ""
   }
 
@@ -187,6 +202,26 @@ ColumnLayout {
     Layout.fillWidth: true
     visible: root.field.type === "multiselect"
     spacing: Style.space(6)
+    activeFocusOnTab: true
+    property int focusIndex: 0
+    KeyNavigation.backtab: root.fieldIndex === 0 ? root.backtabTarget : null
+    onActiveFocusChanged: {
+      if (!activeFocus || multiselectRepeater.count === 0) return
+      root.resetMultiselectFocus()
+    }
+    Keys.priority: Keys.BeforeItem
+    Keys.onPressed: function(event) {
+      if (event.key === Qt.Key_Left || event.text === "h") {
+        root.focusMultiselectChoice(focusIndex - 1)
+        event.accepted = true
+      } else if (event.key === Qt.Key_Right || event.text === "l") {
+        root.focusMultiselectChoice(focusIndex + 1)
+        event.accepted = true
+      } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+        root.toggleFocusedMultiselectChoice()
+        event.accepted = true
+      }
+    }
     Repeater {
       id: multiselectRepeater
       model: root.field.options || []
@@ -200,21 +235,14 @@ ColumnLayout {
         accent: Color.accent
         fontSize: Style.font.bodySmall
         selected: root.controller.multiValues(root.field).indexOf(value) !== -1
+        hasCursor: multiselectChoices.activeFocus && multiselectChoices.focusIndex === index
         bordered: true
-        focusable: true
-        KeyNavigation.backtab: root.fieldIndex === 0 && index === 0 ? root.backtabTarget : null
+        focusable: false
         onClicked: {
           root.controller.toggleMultiselect(root.field, value)
           root.controller.save()
-        }
-        Keys.onPressed: function(event) {
-          if (event.key === Qt.Key_Left || event.text === "h") {
-            root.focusMultiselectChoice(index - 1)
-            event.accepted = true
-          } else if (event.key === Qt.Key_Right || event.text === "l") {
-            root.focusMultiselectChoice(index + 1)
-            event.accepted = true
-          }
+          multiselectChoices.focusIndex = index
+          multiselectChoices.forceActiveFocus()
         }
       }
     }

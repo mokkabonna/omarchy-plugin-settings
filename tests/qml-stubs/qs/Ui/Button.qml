@@ -9,6 +9,7 @@ Item {
   property color accent: "steelblue"
   property bool selected: false
   property bool active: false
+  property bool hasCursor: false
   property bool bordered: false
   property bool focusable: false
   signal clicked()
