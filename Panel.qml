@@ -28,7 +28,7 @@ Item {
   readonly property bool discardConfirmationVisible: discardConfirmation.opened
 
   readonly property var shortcutItems: [
-    { keys: "↑ / ↓", action: "Previous / next item" },
+    { keys: "↑ / k · ↓ / j", action: "Previous / next item" },
     { keys: "Home / End", action: "First / last item" },
     { keys: "Ctrl+1 … 9", action: "Select item by list position" },
     { keys: "Tab / Shift+Tab", action: "Move keyboard focus" },
@@ -373,8 +373,8 @@ Item {
                   return
                 }
                 if (event.modifiers !== Qt.NoModifier) return
-                if (event.key === Qt.Key_Up) root.selectRelativeWidget(-1)
-                else if (event.key === Qt.Key_Down) root.selectRelativeWidget(1)
+                if (event.key === Qt.Key_Up || event.text === "k") root.selectRelativeWidget(-1)
+                else if (event.key === Qt.Key_Down || event.text === "j") root.selectRelativeWidget(1)
                 else if (event.key === Qt.Key_Home) root.selectRelativeWidget(-9999)
                 else if (event.key === Qt.Key_End) root.selectRelativeWidget(9999)
                 else return

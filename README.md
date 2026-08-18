@@ -25,7 +25,7 @@ supported plugin instances can be configured.
 - `Ctrl+S`: save pending changes.
 - `Ctrl+R`: reset the selected item to its defaults.
 - `Ctrl+W`: close the window.
-- `Up` / `Down`, `Home` / `End`: navigate the item list when it is focused.
+- `Up` / `k` and `Down` / `j`, plus `Home` / `End`: navigate the focused item list.
 - `Ctrl+1` through `Ctrl+9`: select the corresponding item in the list.
 - `Tab` / `Shift+Tab`: move between interactive controls; `Enter` or `Space`:
   activate the focused control.
