@@ -2,4 +2,8 @@ module qs.Ui
 ButtonGroup 1.0 ButtonGroup.qml
 ConfirmDialog 1.0 ConfirmDialog.qml
 BarWidget 1.0 BarWidget.qml
+Button 1.0 Button.qml
+CursorSurface 1.0 CursorSurface.qml
+TextField 1.0 TextField.qml
+Toggle 1.0 Toggle.qml
 WidgetButton 1.0 WidgetButton.qml

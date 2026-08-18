@@ -221,7 +221,7 @@ Item {
     repeat: false
     onTriggered: {
       if (root.shortcutsVisible) shortcutOverlay.forceCloseFocus()
-      else shortcutsMouse.forceActiveFocus()
+      else shortcutsButton.forceActiveFocus()
     }
   }
 
@@ -323,7 +323,7 @@ Item {
               Layout.fillHeight: true
               clip: true
               model: root.configurableEntries()
-              delegate: Rectangle {
+              delegate: CursorSurface {
                 required property var modelData
                 width: widgetList.width
                 height: 54
@@ -331,9 +331,10 @@ Item {
                 readonly property bool selectedInstance: root.selectedId === modelData.id
                   && root.selectedKind === modelData.kind && root.selectedSection === modelData.section
                   && root.selectedIndex === modelData.index
-                color: selectedInstance ? Color.menu.selectedBackground : "transparent"
-                border.color: widgetList.activeFocus && selectedInstance ? Color.accent : "transparent"
-                border.width: widgetList.activeFocus && selectedInstance ? 2 : 0
+                current: selectedInstance
+                hasCursor: widgetList.activeFocus && selectedInstance
+                foreground: Color.foreground
+                accent: Color.accent
                 Column {
                   anchors.fill: parent
                   anchors.margins: Style.space(8)
@@ -366,7 +367,7 @@ Item {
               }
               Keys.onPressed: function(event) {
                 if (event.key === Qt.Key_Tab) {
-                  if (event.modifiers & Qt.ShiftModifier) shortcutsMouse.forceActiveFocus()
+                  if (event.modifiers & Qt.ShiftModifier) shortcutsButton.forceActiveFocus()
                   else root.focusFirstFormControl()
                   event.accepted = true
                   return
@@ -402,39 +403,18 @@ Item {
               font.bold: true
               elide: Text.ElideRight
             }
-            Rectangle {
-              Layout.preferredWidth: shortcutsLabel.implicitWidth + Style.space(24)
+            Button {
+              id: shortcutsButton
               Layout.preferredHeight: Style.space(36)
-              radius: Style.cornerRadius / 2
-              color: shortcutsMouse.containsMouse ? Color.menu.selectedBackground : "transparent"
-              border.color: shortcutsMouse.activeFocus ? Color.accent : Color.menu.border
-              border.width: shortcutsMouse.activeFocus ? 2 : 1
-              Text {
-                id: shortcutsLabel
-                anchors.centerIn: parent
-                text: "Shortcuts"
-                color: Color.foreground
-                font.family: Style.font.family
-                font.pixelSize: Style.font.bodySmall
-              }
-              MouseArea {
-                id: shortcutsMouse
-                anchors.fill: parent
-                activeFocusOnTab: true
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.toggleShortcuts()
-                Keys.onPressed: function(event) {
-                  if (event.key === Qt.Key_Tab) {
-                    if (event.modifiers & Qt.ShiftModifier) saveMouse.forceActiveFocus()
-                    else widgetList.forceActiveFocus()
-                    event.accepted = true
-                  } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
-                    root.toggleShortcuts()
-                    event.accepted = true
-                  }
-                }
-              }
+              text: "Shortcuts"
+              fontSize: Style.font.bodySmall
+              foreground: Color.foreground
+              accent: Color.accent
+              bordered: true
+              focusable: true
+              onClicked: root.toggleShortcuts()
+              KeyNavigation.backtab: saveButton
+              KeyNavigation.tab: widgetList
             }
           }
           Text {
@@ -486,62 +466,28 @@ Item {
               font.family: Style.font.family
               font.pixelSize: Style.font.bodySmall
             }
-            Rectangle {
-              Layout.preferredWidth: resetLabel.implicitWidth + Style.space(24)
+            Button {
+              id: resetButton
               Layout.preferredHeight: Style.space(38)
-              radius: Style.cornerRadius / 2
-              color: resetMouse.containsMouse ? Color.menu.selectedBackground : "transparent"
-              border.color: resetMouse.activeFocus ? Color.accent : Color.menu.border
-              border.width: resetMouse.activeFocus ? 2 : 1
-              Text { id: resetLabel; anchors.centerIn: parent; text: "Reset"; color: Color.foreground; font.family: Style.font.family; font.pixelSize: Style.font.body }
-              MouseArea {
-                id: resetMouse
-                anchors.fill: parent
-                activeFocusOnTab: true
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.resetToDefaults()
-                Keys.onPressed: function(event) {
-                  if (event.key !== Qt.Key_Return && event.key !== Qt.Key_Enter && event.key !== Qt.Key_Space) return
-                  root.resetToDefaults()
-                  event.accepted = true
-                }
-              }
+              text: "Reset"
+              foreground: Color.foreground
+              accent: Color.accent
+              bordered: true
+              focusable: true
+              onClicked: root.resetToDefaults()
             }
-            Rectangle {
-              Layout.preferredWidth: saveLabel.implicitWidth + Style.space(28)
+            Button {
+              id: saveButton
               Layout.preferredHeight: Style.space(38)
-              radius: Style.cornerRadius / 2
-              color: root.dirty ? (saveMouse.containsMouse ? Qt.lighter(Color.accent, 1.08) : Color.accent) : Color.menu.border
-              Rectangle {
-                anchors.fill: parent
-                anchors.margins: -Style.space(3)
-                radius: parent.radius + Style.space(3)
-                color: "transparent"
-                border.color: Color.foreground
-                border.width: 2
-                visible: saveMouse.activeFocus
-              }
-              Text { id: saveLabel; anchors.centerIn: parent; text: "Save"; color: Color.background; font.family: Style.font.family; font.pixelSize: Style.font.body; font.bold: true }
-              MouseArea {
-                id: saveMouse
-                anchors.fill: parent
-                activeFocusOnTab: true
-                hoverEnabled: true
-                enabled: root.dirty
-                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                onClicked: if (enabled) root.save()
-                Keys.onPressed: function(event) {
-                  if (event.key === Qt.Key_Tab) {
-                    if (event.modifiers & Qt.ShiftModifier) resetMouse.forceActiveFocus()
-                    else shortcutsMouse.forceActiveFocus()
-                    event.accepted = true
-                  } else if (enabled && (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space)) {
-                    root.save()
-                    event.accepted = true
-                  }
-                }
-              }
+              text: "Save"
+              foreground: Color.foreground
+              accent: Color.accent
+              active: root.dirty
+              bordered: true
+              focusable: true
+              enabled: root.dirty
+              onClicked: root.save()
+              KeyNavigation.tab: shortcutsButton
             }
           }
         }
