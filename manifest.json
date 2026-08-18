@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "mokkabonna.plugin-settings",
   "name": "Plugin Settings",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": "Martin Hansen",
   "description": "Configure the Omarchy shell and schema-enabled plugins.",
   "kinds": [
