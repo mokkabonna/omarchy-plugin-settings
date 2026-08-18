@@ -120,6 +120,7 @@ Item {
 
       verify(fieldUnderTest.focusFirstControl())
       verify(fieldUnderTest.multiselectControl.activeFocus)
+      compare(fieldUnderTest.focusedControl(), fieldUnderTest.multiselectControl)
       verify(firstChoice.hasCursor)
       keyClick(Qt.Key_Right)
       verify(secondChoice.hasCursor)

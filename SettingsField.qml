@@ -38,6 +38,15 @@ ColumnLayout {
     return true
   }
 
+  function focusedControl() {
+    if (valueInput.activeFocus) return valueInput
+    if (booleanToggle.activeFocus) return booleanToggle
+    if (enumToggle.activeFocus) return enumToggle
+    if (enumOptions.activeFocus) return enumOptions
+    if (multiselectChoices.activeFocus) return multiselectChoices
+    return null
+  }
+
   function resetMultiselectFocus() {
     var selectedIndex = -1
     for (var i = 0; i < multiselectRepeater.count; i++) {

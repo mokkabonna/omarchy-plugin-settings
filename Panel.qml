@@ -20,6 +20,7 @@ Item {
   property alias selectedDefinition: settingsController.selectedDefinition
   property alias draft: settingsController.draft
   property alias status: settingsController.status
+  property var resetFocusTarget: null
 
   readonly property bool resetConfirmationVisible: resetConfirmation.opened
 
@@ -136,6 +137,7 @@ Item {
   }
 
   function requestReset() {
+    resetFocusTarget = currentFocusedControl()
     resetConfirmation.selectedIndex = 1
     resetConfirmation.opened = true
     windowContent.forceActiveFocus()
@@ -143,13 +145,14 @@ Item {
 
   function cancelReset() {
     resetConfirmation.opened = false
-    resetButton.forceActiveFocus()
+    restoreResetFocus()
   }
 
   function confirmReset() {
     resetConfirmation.opened = false
     windowContent.forceActiveFocus()
     resetToDefaults()
+    restoreResetFocus()
   }
 
   function handleResetKey(event) {
@@ -167,6 +170,27 @@ Item {
       if (fieldItem && fieldItem.focusFirstControl()) return true
     }
     return false
+  }
+
+  function currentFocusedControl() {
+    if (widgetList.activeFocus) return widgetList
+    if (resetButton.activeFocus) return resetButton
+    for (var i = 0; i < fieldsRepeater.count; i++) {
+      var fieldItem = fieldsRepeater.itemAt(i)
+      if (!fieldItem) continue
+      var control = fieldItem.focusedControl()
+      if (control) return control
+    }
+    return null
+  }
+
+  function restoreResetFocus() {
+    var target = resetFocusTarget
+    resetFocusTarget = null
+    if (!target || typeof target.forceActiveFocus !== "function") return
+    Qt.callLater(function() {
+      if (target.visible && target.enabled) target.forceActiveFocus()
+    })
   }
 
   function currentKeyboardHint() {
