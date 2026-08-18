@@ -311,4 +311,19 @@ TestCase {
     compare(panel.selectedId, "omarchy.shell.idle")
     verify(!panel.dirty)
   }
+
+  function test_discard_confirmation_accepts_keyboard_navigation() {
+    panel.selectWidget(entryWith("omarchy.shell.bar", "shell"))
+    panel.setValue("transparent", true)
+    panel.requestClose()
+
+    verify(panel.handleDiscardKey({ key: Qt.Key_Left }))
+    verify(panel.handleDiscardKey({ key: Qt.Key_Return }))
+    verify(!panel.discardConfirmationVisible)
+    compare(shellFixture.hideCalls, 0)
+
+    panel.requestClose()
+    verify(panel.handleDiscardKey({ key: Qt.Key_Return }))
+    compare(shellFixture.hideCalls, 1)
+  }
 }

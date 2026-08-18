@@ -24,6 +24,7 @@ Item {
   property bool shortcutsVisible: false
   property string pendingDiscardAction: ""
   property var pendingSelection: null
+  property Item focusBeforeDiscard: null
 
   readonly property bool discardConfirmationVisible: discardConfirmation.opened
 
@@ -74,9 +75,12 @@ Item {
       && instance.section === selectedSection && instance.index === selectedIndex
     if (alreadySelected) return
     if (dirty) {
+      focusBeforeDiscard = window.activeFocusItem
       pendingDiscardAction = "select"
       pendingSelection = instance
+      discardConfirmation.selectedIndex = 1
       discardConfirmation.opened = true
+      windowContent.forceActiveFocus()
       return
     }
     settingsController.selectWidget(instance)
@@ -148,9 +152,12 @@ Item {
 
   function requestClose() {
     if (dirty) {
+      focusBeforeDiscard = window.activeFocusItem
       pendingDiscardAction = "close"
       pendingSelection = null
+      discardConfirmation.selectedIndex = 1
       discardConfirmation.opened = true
+      windowContent.forceActiveFocus()
       return
     }
     closeWithoutConfirmation()
@@ -162,9 +169,13 @@ Item {
   }
 
   function cancelDiscard() {
+    var previousFocus = focusBeforeDiscard
     pendingDiscardAction = ""
     pendingSelection = null
+    focusBeforeDiscard = null
     discardConfirmation.opened = false
+    if (previousFocus && typeof previousFocus.forceActiveFocus === "function")
+      previousFocus.forceActiveFocus()
   }
 
   function confirmDiscard() {
@@ -173,6 +184,11 @@ Item {
     cancelDiscard()
     if (action === "select" && selection) settingsController.selectWidget(selection)
     else if (action === "close") closeWithoutConfirmation()
+  }
+
+  function handleDiscardKey(event) {
+    if (!discardConfirmation.opened) return false
+    return discardConfirmation.handleKey(event)
   }
 
   function toggleShortcuts() {
@@ -227,6 +243,7 @@ Item {
     }
 
     Rectangle {
+      id: windowContent
       anchors.fill: parent
       radius: Style.cornerRadius
       color: Color.menu.background
@@ -235,7 +252,9 @@ Item {
       focus: true
       Keys.priority: Keys.AfterItem
       Keys.onPressed: function(event) {
-        if (event.key === Qt.Key_Escape) {
+        if (root.handleDiscardKey(event)) {
+          event.accepted = true
+        } else if (event.key === Qt.Key_Escape) {
           if (root.shortcutsVisible) root.hideShortcuts()
           else root.requestClose()
           event.accepted = true
