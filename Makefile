@@ -1,4 +1,6 @@
-.PHONY: check test integration lint manifest whitespace act local install reload release
+.DEFAULT_GOAL := help
+
+.PHONY: help check test integration lint manifest whitespace act local install reload release
 
 QML_FILES := Panel.qml BarWidget.qml SettingsController.qml SettingsField.qml
 QMLLINT ?= qmllint
@@ -12,27 +14,30 @@ PLUGIN_PATH := $(PLUGIN_DIR)/$(PLUGIN_ID)
 PLUGIN_REPO ?= https://github.com/mokkabonna/omarchy-plugin-settings.git
 RELEASE_CHECK ?= check
 
+help: ## Print the available Make targets.
+	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z0-9_.-]+:.*## / {printf "  %-12s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
 # Run every local validation check.
-check: test integration lint manifest whitespace
+check: test integration lint manifest whitespace ## Run every local validation check.
 
 # Run QML behavior tests without requiring a display server.
-test:
+test: ## Run QML behavior tests without requiring a display server.
 	QT_QPA_PLATFORM=offscreen QT_QPA_PLATFORMTHEME= $(QMLTEST) -input tests -import $(QMLLINT_IMPORT_PATH) -import .
 
 # Test the local and downloaded plugin workflows in a temporary environment.
-integration:
+integration: ## Test the local and downloaded plugin workflows.
 	bash tests/test_make.sh
 
 # Run QML lint against the plugin entry points and test stubs.
-lint:
+lint: ## Run QML lint against the plugin entry points and test stubs.
 	$(QMLLINT) -I $(QMLLINT_IMPORT_PATH) $(QMLLINT_ARGS) $(QML_FILES)
 
 # Validate the required plugin manifest fields.
-manifest:
+manifest: ## Validate the required plugin manifest fields.
 	jq -e '(.schemaVersion == 1) and (.id | type == "string" and length > 0) and (.name | type == "string" and length > 0) and (.version | type == "string" and length > 0) and (.entryPoints.panel == "Panel.qml") and (.entryPoints.barWidget == "BarWidget.qml")' manifest.json >/dev/null
 
 # Check for whitespace errors in the Git diff.
-whitespace:
+whitespace: ## Check for whitespace errors in the Git diff.
 	@if [ -n "$$CI" ]; then \
 		git diff --check "$$(git hash-object -t tree /dev/null)" HEAD; \
 	else \
@@ -40,15 +45,15 @@ whitespace:
 	fi
 
 # Run the GitHub Actions check workflow locally with act and Docker.
-act:
+act: ## Run the GitHub Actions check workflow locally with act and Docker.
 	$(ACT) push -W .github/workflows/check.yml
 
 # Reload QML changes by restarting the Omarchy shell.
-reload:
+reload: ## Restart the Omarchy shell to reload QML changes.
 	omarchy restart shell
 
 # Validate, commit, and tag a release; publish it separately with git push.
-release:
+release: ## Validate, commit, and tag a release.
 	@if [ -z "$(VERSION)" ]; then \
 		echo "Usage: make release VERSION=x.y.z" >&2; \
 		exit 1; \
@@ -81,7 +86,7 @@ release:
 	@echo "Created v$(VERSION). Publish with: git push origin HEAD v$(VERSION)"
 
 # Replace the installed plugin with a symlink to this checkout.
-local:
+local: ## Link this checkout into the local Omarchy plugin directory.
 	@set -eu; \
 	if [ -L "$(PLUGIN_PATH)" ] && [ "$$(readlink -f "$(PLUGIN_PATH)")" = "$$(pwd -P)" ]; then \
 		echo "$(PLUGIN_ID) is already linked to $$(pwd -P)"; \
@@ -98,7 +103,7 @@ local:
 	omarchy plugin enable $(PLUGIN_ID)
 
 # Download and enable the plugin from PLUGIN_REPO.
-install:
+install: ## Download and enable the repository version.
 	@set -eu; \
 	if [ -e "$(PLUGIN_PATH)" ] || [ -L "$(PLUGIN_PATH)" ]; then \
 		backup="$(PLUGIN_DIR)/.$(PLUGIN_ID).previous.$$(date -u +%Y%m%d%H%M%S)"; \
