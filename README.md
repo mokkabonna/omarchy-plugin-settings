@@ -11,12 +11,15 @@ supported plugin instances can be configured.
 - Provides forms for Omarchy bar appearance and idle timeouts.
 - Lists enabled bar-widget instances, regular plugins, and the active full bar
   when they declare a supported manifest schema.
-- Writes changes only to the selected item in `~/.config/omarchy/shell.json`.
+- Lists the Omarchy shell's Bar and Idle settings alongside configurable
+  widgets and plugins.
+- Writes changes to the selected item in `~/.config/omarchy/shell.json`.
 - Renders `string`, `path`, `integer`, `number`, `boolean`, `enum`, and
   `multiselect` fields.
 - Enforces numeric `min`, `max`, and `step` constraints.
 - Uses switches for booleans and two-option `Off` / `On` enums.
-- Saves choices immediately and text or numeric values when editing finishes.
+- Saves toggles, choices, and numeric arrow-key changes immediately; text and
+  numeric field edits are also saved when editing finishes.
 - Provides a confirmed Reset-to-defaults action.
 
 ## Interactions
@@ -111,7 +114,8 @@ make integration
 
 The QML implementation is split by responsibility: `Panel.qml` owns the shell
 window and focus flow, `SettingsController.qml` owns discovery and persistence,
-and `SettingsField.qml` renders schema fields.
+and `SettingsField.qml` renders schema fields. `BarWidget.qml` contributes the
+bar button that toggles the panel.
 
 To run the GitHub Actions check workflow locally, install
 [nektos/act](https://nektosact.com/installation/) and ensure Docker is
@@ -134,12 +138,13 @@ at the end.
 
 ## Scope
 
-The built-in Bar and Idle forms patch their corresponding top-level sections
-without replacing layout or other unknown values. Reset reads Omarchy's live
-default configuration rather than hardcoding values.
+The panel always includes built-in Bar and Idle forms. Their values are written
+to the corresponding top-level `bar` and `idle` sections while preserving other
+keys in those sections. Their reset values come from Omarchy's live defaults.
 
-Bar widgets use Omarchy's existing `barWidget.schema` and `barWidget.defaults`
-fields. Other plugin kinds use this plugin's lightweight `settings` convention:
+Bar widgets are included only when they are present in the current bar layout
+and expose Omarchy's `barWidget.schema` metadata. Other plugins use this
+plugin's lightweight `settings` convention:
 
 ```json
 "settings": {
@@ -152,6 +157,14 @@ fields. Other plugin kinds use this plugin's lightweight `settings` convention:
 ```
 
 The convention applies to `panel`, `overlay`, `menu`, and `service` plugins;
-their values are saved to the matching entry in `plugins[]`. For a full `bar`
-plugin, values are saved to the active `bar` entry. The form format is flat:
-nested values and plugin-owned `settingsForm` UIs are not rendered.
+their values are saved to matching entries in `plugins[]`. An enabled plugin
+with a schema but no matching entry is shown as `Plugin defaults`, and a save
+creates its entry. For a full `bar` plugin, the settings are shown only when it
+is the active bar plugin and are saved to the active `bar` entry. In both cases,
+the selected plugin entry is rebuilt from its `id` and schema values, so
+unrecognized extra keys on that entry are not retained. The form format is
+flat: nested values and plugin-owned `settingsForm` UIs are not rendered.
+
+Only plugins with a non-empty schema are shown, and plugins with other kinds are
+ignored. Plugin reset uses the manifest's `defaults` and field-level
+`defaultValue` values; it does not read plugin-specific live defaults.
