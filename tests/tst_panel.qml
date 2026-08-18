@@ -178,6 +178,8 @@ TestCase {
     compare(shellFixture.shellConfig.plugins[0].enabled, true)
     compare(shellFixture.shellConfig.plugins.length, 1)
     compare(panel.status, "Saved to shell.json")
+    panel.clearSavedStatus()
+    compare(panel.status, "")
   }
 
   function test_save_updates_shell_bar_and_preserves_layout() {

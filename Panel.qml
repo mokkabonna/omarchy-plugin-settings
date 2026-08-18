@@ -168,6 +168,10 @@ Item {
     return resetConfirmation.handleKey(event)
   }
 
+  function clearSavedStatus() {
+    if (settingsController.status === "Saved to shell.json") settingsController.status = ""
+  }
+
   function toggleShortcuts() {
     shortcutsVisible = !shortcutsVisible
     shortcutsFocusTimer.restart()
@@ -194,6 +198,21 @@ Item {
     onTriggered: {
       if (root.shortcutsVisible) shortcutOverlay.forceCloseFocus()
       else helpButton.forceActiveFocus()
+    }
+  }
+
+  Timer {
+    id: savedStatusTimer
+    interval: 2400
+    repeat: false
+    onTriggered: root.clearSavedStatus()
+  }
+
+  Connections {
+    target: settingsController
+    function onStatusChanged() {
+      if (settingsController.status === "Saved to shell.json") savedStatusTimer.restart()
+      else savedStatusTimer.stop()
     }
   }
 
