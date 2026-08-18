@@ -366,7 +366,7 @@ Item {
               }
               Keys.onPressed: function(event) {
                 if (event.key === Qt.Key_Tab) {
-                  if (event.modifiers & Qt.ShiftModifier) closeMouse.forceActiveFocus()
+                  if (event.modifiers & Qt.ShiftModifier) shortcutsMouse.forceActiveFocus()
                   else root.focusFirstFormControl()
                   event.accepted = true
                   return
@@ -427,43 +427,10 @@ Item {
                 Keys.onPressed: function(event) {
                   if (event.key === Qt.Key_Tab) {
                     if (event.modifiers & Qt.ShiftModifier) saveMouse.forceActiveFocus()
-                    else closeMouse.forceActiveFocus()
-                    event.accepted = true
-                  } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
-                    root.toggleShortcuts()
-                    event.accepted = true
-                  }
-                }
-              }
-            }
-            Rectangle {
-              Layout.preferredWidth: Style.space(36)
-              Layout.preferredHeight: Style.space(36)
-              radius: Style.cornerRadius / 2
-              color: closeMouse.containsMouse ? Color.menu.selectedBackground : "transparent"
-              border.color: closeMouse.activeFocus ? Color.accent : Color.menu.border
-              border.width: closeMouse.activeFocus ? 2 : 1
-              Text {
-                anchors.centerIn: parent
-                text: "×"
-                color: Color.foreground
-                font.family: Style.font.family
-                font.pixelSize: Style.font.heading
-              }
-              MouseArea {
-                id: closeMouse
-                anchors.fill: parent
-                activeFocusOnTab: true
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.requestClose()
-                Keys.onPressed: function(event) {
-                  if (event.key === Qt.Key_Tab) {
-                    if (event.modifiers & Qt.ShiftModifier) shortcutsMouse.forceActiveFocus()
                     else widgetList.forceActiveFocus()
                     event.accepted = true
                   } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
-                    root.requestClose()
+                    root.toggleShortcuts()
                     event.accepted = true
                   }
                 }

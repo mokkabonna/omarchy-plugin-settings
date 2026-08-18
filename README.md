@@ -21,7 +21,6 @@ supported plugin instances can be configured.
 ## Interactions
 
 - Bar gear: toggle the settings window.
-- Window close button: close the window.
 - `Escape`: close the window.
 - `Ctrl+S`: save pending changes.
 - `Ctrl+R`: reset the selected item to its defaults.
