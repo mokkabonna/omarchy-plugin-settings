@@ -21,7 +21,6 @@ Item {
   property alias draft: settingsController.draft
   property alias status: settingsController.status
   property bool shortcutsVisible: false
-  property Item focusBeforeReset: null
 
   readonly property bool resetConfirmationVisible: resetConfirmation.opened
 
@@ -148,22 +147,17 @@ Item {
   }
 
   function requestReset() {
-    focusBeforeReset = window.activeFocusItem
     resetConfirmation.selectedIndex = 1
     resetConfirmation.opened = true
     windowContent.forceActiveFocus()
   }
 
   function cancelReset() {
-    var previousFocus = focusBeforeReset
-    focusBeforeReset = null
     resetConfirmation.opened = false
-    if (previousFocus && typeof previousFocus.forceActiveFocus === "function")
-      previousFocus.forceActiveFocus()
+    resetButton.forceActiveFocus()
   }
 
   function confirmReset() {
-    focusBeforeReset = null
     resetConfirmation.opened = false
     windowContent.forceActiveFocus()
     resetToDefaults()
