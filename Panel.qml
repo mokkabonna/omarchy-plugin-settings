@@ -163,7 +163,9 @@ Item {
   }
 
   function confirmReset() {
-    cancelReset()
+    focusBeforeReset = null
+    resetConfirmation.opened = false
+    windowContent.forceActiveFocus()
     resetToDefaults()
   }
 

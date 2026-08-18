@@ -35,7 +35,10 @@ TestCase {
       if (id !== "example.widget") return null
       return {
         displayName: "Example widget",
-        schema: [{ key: "enabled", type: "boolean" }],
+        schema: [
+          { key: "items", type: "multiselect", options: ["a", "b"] },
+          { key: "enabled", type: "boolean", defaultValue: false }
+        ],
         defaults: { enabled: false }
       }
     }
@@ -91,7 +94,7 @@ TestCase {
       bar: {
         position: "top",
         transparent: false,
-        layout: { right: [{ id: "example.widget", enabled: true }] }
+        layout: { right: [{ id: "example.widget", items: ["a"], enabled: true }] }
       },
       idle: { screensaver: 150, lock: 300 },
       plugins: [{ id: "example.plugin", enabled: false, mode: "safe" }]
@@ -291,5 +294,20 @@ TestCase {
     verify(!panel.resetConfirmationVisible)
     compare(shellFixture.shellConfig.bar.transparent, true)
     compare(shellFixture.shellConfig.bar.position, "bottom")
+  }
+
+  function test_reset_manifest_widget_applies_boolean_and_multiselect_defaults() {
+    panel.selectWidget(entryWith("example.widget", "bar-widget"))
+    compare(panel.draft.enabled, true)
+    compare(panel.draft.items, ["a"])
+
+    panel.requestReset()
+    panel.confirmReset()
+
+    compare(shellFixture.shellConfig.bar.layout.right[0].enabled, false)
+    compare(shellFixture.shellConfig.bar.layout.right[0].items, undefined)
+    compare(panel.draft.enabled, false)
+    compare(panel.draft.items, undefined)
+    compare(panel.status, "Saved to shell.json")
   }
 }
