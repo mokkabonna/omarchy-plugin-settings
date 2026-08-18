@@ -19,6 +19,31 @@ ColumnLayout {
   Layout.fillWidth: true
   spacing: Style.space(1)
 
+  function firstFocusControl() {
+    if (["string", "path", "integer", "number"].indexOf(field.type) !== -1) return valueInput
+    if (field.type === "boolean") return booleanToggle
+    if (controller.isOnOffEnum(field)) return enumToggle
+    if (field.type === "enum") return enumOptions
+    if (field.type === "multiselect" && multiselectRepeater.count > 0)
+      return multiselectRepeater.itemAt(0)
+    return null
+  }
+
+  function focusFirstControl() {
+    var control = firstFocusControl()
+    if (!control || !control.visible || !control.enabled
+        || typeof control.forceActiveFocus !== "function") return false
+    control.forceActiveFocus()
+    return true
+  }
+
+  function focusMultiselectChoice(index) {
+    if (multiselectRepeater.count === 0) return
+    var next = Math.max(0, Math.min(multiselectRepeater.count - 1, index))
+    var choice = multiselectRepeater.itemAt(next)
+    if (choice) choice.forceActiveFocus()
+  }
+
   Text {
     visible: root.field.type !== "boolean" && !root.controller.isOnOffEnum(root.field)
     text: root.field.label || root.field.key
@@ -137,9 +162,11 @@ ColumnLayout {
     visible: root.field.type === "multiselect"
     spacing: Style.space(6)
     Repeater {
+      id: multiselectRepeater
       model: root.field.options || []
       delegate: Button {
         required property var modelData
+        required property int index
         readonly property string value: root.controller.enumOptionValue(modelData)
         objectName: "settings-field-multiselect-" + value
         text: typeof modelData === "object" ? (modelData.label || value) : value
@@ -149,8 +176,17 @@ ColumnLayout {
         selected: root.controller.multiValues(root.field).indexOf(value) !== -1
         bordered: true
         focusable: true
-        KeyNavigation.backtab: root.fieldIndex === 0 ? root.backtabTarget : null
+        KeyNavigation.backtab: root.fieldIndex === 0 && index === 0 ? root.backtabTarget : null
         onClicked: root.controller.toggleMultiselect(root.field, value)
+        Keys.onPressed: function(event) {
+          if (event.key === Qt.Key_Left || event.text === "h") {
+            root.focusMultiselectChoice(index - 1)
+            event.accepted = true
+          } else if (event.key === Qt.Key_Right || event.text === "l") {
+            root.focusMultiselectChoice(index + 1)
+            event.accepted = true
+          }
+        }
       }
     }
   }

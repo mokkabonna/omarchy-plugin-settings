@@ -203,18 +203,9 @@ Item {
   }
 
   function focusFirstFormControl() {
-    var pending = []
-    if (form.children)
-      for (var first = 0; first < form.children.length; first++) pending.push(form.children[first])
-    while (pending.length > 0) {
-      var item = pending.shift()
-      if (!item || !item.visible || !item.enabled) continue
-      if (item.activeFocusOnTab && typeof item.forceActiveFocus === "function") {
-        item.forceActiveFocus()
-        return true
-      }
-      if (item.children)
-        for (var i = 0; i < item.children.length; i++) pending.push(item.children[i])
+    for (var i = 0; i < fieldsRepeater.count; i++) {
+      var fieldItem = fieldsRepeater.itemAt(i)
+      if (fieldItem && fieldItem.focusFirstControl()) return true
     }
     return false
   }
@@ -442,6 +433,7 @@ Item {
               width: parent.width
               spacing: Style.space(14)
               Repeater {
+                id: fieldsRepeater
                 model: root.schema
                 delegate: SettingsField {
                   required property var modelData

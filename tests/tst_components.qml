@@ -111,6 +111,28 @@ Item {
       compare(controller.draft.features, ["a"])
     }
 
+    function test_multiselect_is_first_focus_target_and_accepts_horizontal_navigation() {
+      currentField = ({ key: "features", type: "multiselect", options: ["a", "b"] })
+      controller.selectedDefinition = { schema: [currentField], defaults: { features: [] } }
+      controller.draft = ({ features: [] })
+      waitForItemPolished(fieldUnderTest)
+      var firstChoice = findChild(fieldUnderTest, "settings-field-multiselect-a")
+      var secondChoice = findChild(fieldUnderTest, "settings-field-multiselect-b")
+      verify(firstChoice !== null)
+      verify(secondChoice !== null)
+
+      verify(fieldUnderTest.focusFirstControl())
+      verify(firstChoice.activeFocus)
+      keyClick(Qt.Key_Right)
+      verify(secondChoice.activeFocus)
+      keyClick(Qt.Key_Left)
+      verify(firstChoice.activeFocus)
+      keyClick(Qt.Key_L)
+      verify(secondChoice.activeFocus)
+      keyClick(Qt.Key_H)
+      verify(firstChoice.activeFocus)
+    }
+
     function test_shortcut_overlay_close_accepts_mouse_and_keyboard() {
       shortcutOverlay.visible = true
       tryVerify(function() { return shortcutOverlay.closeControl.width > 0 })
