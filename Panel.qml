@@ -432,6 +432,21 @@ Item {
             }
           }
 
+          RowLayout {
+            Layout.fillWidth: true
+            Item { Layout.fillWidth: true }
+            Button {
+              id: resetButton
+              Layout.preferredHeight: Style.space(38)
+              text: "Reset"
+              foreground: Color.foreground
+              accent: Color.accent
+              bordered: true
+              focusable: true
+              onClicked: root.requestReset()
+              KeyNavigation.tab: widgetList
+            }
+          }
         }
         }
 
@@ -461,17 +476,6 @@ Item {
             font.pixelSize: Style.font.bodySmall
             horizontalAlignment: Text.AlignRight
             elide: Text.ElideRight
-          }
-          Button {
-            id: resetButton
-            Layout.preferredHeight: Style.space(38)
-            text: "Reset"
-            foreground: Color.foreground
-            accent: Color.accent
-            bordered: true
-            focusable: true
-            onClicked: root.requestReset()
-            KeyNavigation.tab: widgetList
           }
         }
       }
