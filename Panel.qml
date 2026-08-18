@@ -238,11 +238,16 @@ Item {
         }
       }
 
-      RowLayout {
-        id: mainContent
+      ColumnLayout {
         anchors.fill: parent
         anchors.margins: Style.space(18)
-        spacing: Style.space(14)
+        spacing: Style.space(10)
+
+        RowLayout {
+          id: mainContent
+          Layout.fillWidth: true
+          Layout.fillHeight: true
+          spacing: Style.space(14)
         Rectangle {
           Layout.preferredWidth: 245
           Layout.fillHeight: true
@@ -400,38 +405,46 @@ Item {
             }
           }
 
-          RowLayout {
+        }
+        }
+
+        Rectangle {
+          Layout.fillWidth: true
+          Layout.preferredHeight: 1
+          color: Color.menu.border
+        }
+
+        RowLayout {
+          Layout.fillWidth: true
+          Text {
+            Layout.preferredWidth: Math.min(implicitWidth, Style.space(260))
+            text: root.status
+            color: Color.foreground
+            opacity: 0.65
+            font.family: Style.font.family
+            font.pixelSize: Style.font.bodySmall
+            elide: Text.ElideRight
+          }
+          Text {
             Layout.fillWidth: true
-            Text {
-              Layout.preferredWidth: Math.min(implicitWidth, Style.space(260))
-              text: root.status
-              color: Color.foreground
-              opacity: 0.65
-              font.family: Style.font.family
-              font.pixelSize: Style.font.bodySmall
-              elide: Text.ElideRight
-            }
-            Text {
-              Layout.fillWidth: true
-              text: root.currentKeyboardHint()
-              color: Color.foreground
-              opacity: 0.6
-              font.family: Style.font.family
-              font.pixelSize: Style.font.bodySmall
-              horizontalAlignment: Text.AlignRight
-              elide: Text.ElideRight
-            }
-            Button {
-              id: resetButton
-              Layout.preferredHeight: Style.space(38)
-              text: "Reset"
-              foreground: Color.foreground
-              accent: Color.accent
-              bordered: true
-              focusable: true
-              onClicked: root.requestReset()
-              KeyNavigation.tab: widgetList
-            }
+            text: root.currentKeyboardHint()
+            color: Color.foreground
+            opacity: 0.6
+            font.family: Style.font.family
+            font.pixelSize: Style.font.bodySmall
+            horizontalAlignment: Text.AlignRight
+            elide: Text.ElideRight
+          }
+          Button {
+            id: resetButton
+            Layout.preferredHeight: Style.space(38)
+            text: "Reset"
+            foreground: Color.foreground
+            accent: Color.accent
+            bordered: true
+            focusable: true
+            onClicked: root.requestReset()
+            KeyNavigation.tab: widgetList
           }
         }
       }
